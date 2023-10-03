@@ -125,7 +125,7 @@ void sdb_mainloop() {
 
     int i;
     for (i = 0; i < NR_CMD; i ++) {
-      if (strcmp(cmd, cmd_table[i].name) == 0) {
+      if (strcmp(cmd, cmd_table[i].name) == 0) {//先判断指令表有无这个指令，有则向下      //看看返回值是否小于0，如果小于0则返回到main函数
         if (cmd_table[i].handler(args) < 0) { return; }
         break;
       }
