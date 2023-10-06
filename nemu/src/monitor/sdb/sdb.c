@@ -68,6 +68,19 @@ static int cmd_info(char *args){
    return 0;
 }
 
+static int cmd_x(char *args){
+ char *p=strtok(NULL," ");
+ char *expr=strtok(NULL," ");
+ int len;
+ vaddr_t address;
+ sscanf(p,"%d",&len);
+ sscanf(expr,"%x",&address);
+ for(int i=0;i<len;i++){
+ 
+ }
+return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -79,9 +92,9 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si", "run program", cmd_si},
-  {"info","Registor detailed infomation",cmd_info} 
+  {"info","Registor detailed infomation",cmd_info}, 
   /* TODO: Add more commands */
-
+  {"x","scan memory",cmd_x}
 };
 
 #define NR_CMD ARRLEN(cmd_table)
