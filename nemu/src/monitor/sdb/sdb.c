@@ -85,6 +85,7 @@ char *arg1 = strtok(NULL, " ");
   vaddr_t expr = strtol(arg2, NULL, 16);
 
   int i, j;
+  puts(" ");
   for (i = 0; i < n;) {
     printf(ANSI_FMT("%#018x: ", ANSI_FG_CYAN), expr);
     
