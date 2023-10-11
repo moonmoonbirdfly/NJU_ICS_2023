@@ -100,6 +100,18 @@ char *arg1 = strtok(NULL, " ");
 return 0;
 }
 
+static int cmd_p(char* args) {
+  bool success;
+  word_t res = expr(args, &success);
+  if (!success) {
+    puts("invalid expression");
+  } else {
+    printf("%u\n", res);
+  }
+  return 0;
+}
+
+
 static int cmd_help(char *args);
 
 static struct {
@@ -113,7 +125,9 @@ static struct {
   { "si", "run program", cmd_si},
   {"info","Registor detailed infomation",cmd_info}, 
   /* TODO: Add more commands */
-  {"x","scan memory from expr by n bytes",cmd_x}
+  {"x","scan memory from expr by n bytes",cmd_x},
+  {"p", "Usage: p EXPR. Calculate the expression, e.g. p $eax + 1", cmd_p }
+
 };
 
 #define NR_CMD ARRLEN(cmd_table)
