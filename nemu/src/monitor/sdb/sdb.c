@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/vaddr.h>
 
 static int is_batch_mode = false;
 
@@ -69,15 +70,33 @@ static int cmd_info(char *args){
 }
 
 static int cmd_x(char *args){
- char *p=strtok(NULL," ");
- char *expr=strtok(NULL," ");
- int len;
- vaddr_t address;
- sscanf(p,"%d",&len);
- sscanf(expr,"%x",&address);
- for(int i=0;i<len;i++){
- 
- }
+char *arg1 = strtok(NULL, " ");
+  if (arg1 == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+  char *arg2 = strtok(NULL, " ");
+  if (arg1 == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  int n = strtol(arg1, NULL, 10);
+  vaddr_t expr = strtol(arg2, NULL, 16);
+
+  int i, j;
+  for (i = 0; i < n;) {
+    printf(ANSI_FMT("%#018x: ", ANSI_FG_CYAN), expr);
+    
+    for (j = 0; i < n && j < 4; i++, j++) {
+      word_t w = vaddr_read(expr, 4);
+      expr += 4;
+      printf("%#018x ", w);
+    }
+    puts("");
+  }
+  
+
 return 0;
 }
 
@@ -94,7 +113,7 @@ static struct {
   { "si", "run program", cmd_si},
   {"info","Registor detailed infomation",cmd_info}, 
   /* TODO: Add more commands */
-  {"x","scan memory",cmd_x}
+  {"x","scan memory from expr by n bytes",cmd_x}
 };
 
 #define NR_CMD ARRLEN(cmd_table)
