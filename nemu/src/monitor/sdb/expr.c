@@ -18,44 +18,42 @@
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */
-#include <regex.h>
-#include<memory/vaddr.h>
+#include <regex.h>  // 导入正则表达式库，用于对输入的表达式进行匹配和解析
+#include <memory/vaddr.h>  // 导入虚拟地址库，对程序内存进行操作
 
-
+// 这里定义了一些枚举常量，用于表示不同的标记类型
 enum {
-  /* TODO: Add more token types */
-  TK_NOTYPE = 256,
+  TK_NOTYPE = 256,  // 当前没有标记类型
   
-  TK_POS, TK_NEG, TK_DEREF,
-  TK_EQ, TK_NEQ, TK_GT, TK_LT, TK_GE, TK_LE,
-  TK_AND,
-  TK_OR,
+  TK_POS, TK_NEG, TK_DEREF,  // 正数、负数和解引用操作符
+  TK_EQ, TK_NEQ, TK_GT, TK_LT, TK_GE, TK_LE,  // 等于、不等于、大于、小于、大于等于、小于等于
+  TK_AND,  // 逻辑与
+  TK_OR,  // 逻辑或
 
-  TK_NUM, // 10 & 16
-  TK_REG,
+  TK_NUM, // 十进制和十六进制
+  TK_REG,  // 寄存器变量
 };
 
+// 这个结构体定义了一个规则，包括一个正则表达式和它匹配的标记类型
 static struct rule {
   const char *regex;
   int token_type;
 } rules[] = {
 
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
-{" +", TK_NOTYPE},    // spaces
+  {" +", TK_NOTYPE},    // 空格，不作为标记
 
-  {"\\(", '('}, {"\\)", ')'},
-  {"\\*", '*'}, {"/", '/'},
-  {"\\+", '+'}, {"-", '-'},
-  {"<", TK_LT}, {">", TK_GT}, {"<=", TK_LE}, {">=", TK_GE},
-  {"==", TK_EQ}, {"!=", TK_NEQ},
-  {"&&", TK_AND},
-  {"\\|\\|", TK_OR},
+  {"\\(", '('}, {"\\)", ')'},  // 左括号和右括号
+  {"\\*", '*'}, {"/", '/'},  // 乘法和除法
+  {"\\+", '+'}, {"-", '-'},  // 加法和减法
+  {"<", TK_LT}, {">", TK_GT}, {"<=", TK_LE}, {">=", TK_GE},  // 小于、大于、小于等于、大于等于
+  {"==", TK_EQ}, {"!=", TK_NEQ},  // 等于、不等于
+  {"&&", TK_AND},  // 逻辑与
+  {"\\|\\|", TK_OR},  // 逻辑或
 
-  {"(0x)?[0-9]+", TK_NUM},
-  {"\\$\\w+", TK_REG},
+  {"(0x)?[0-9]+", TK_NUM},  // 十进制或者十六进制的数字
+  {"\\$\\w+", TK_REG},  // $后跟随单词字符的寄存器变量
 };
+
 
 static bool oftypes(int type, int types[], int size) {
   for (int i = 0; i < size; i++) {
@@ -80,8 +78,12 @@ void init_regex() {
   char error_msg[128];
   int ret;
 
+  // 遍历所有的正则表达式规则
   for (i = 0; i < NR_REGEX; i ++) {
+    // 编译正则表达式，将文本形式的正则表达式转换为可以用于匹配的结构
+    // 如果成功，ret为0，如果失败则为非零值
     ret = regcomp(&re[i], rules[i].regex, REG_EXTENDED);
+    // 如果编译失败，将错误信息存入error_msg并报错
     if (ret != 0) {
       regerror(ret, &re[i], error_msg, 128);
       panic("regex compilation failed: %s\n%s", error_msg, rules[i].regex);
@@ -89,30 +91,36 @@ void init_regex() {
   }
 }
 
+
+// 定义一个词法分析单元结构体
 typedef struct token {
-  int type;
-  char str[32];
+  int type;         // 标记类型
+  char str[32];     // 标记字符串
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
-static int nr_token __attribute__((used))  = 0;
 
+static Token tokens[32] __attribute__((used)) = {};  // 存储标记的数组
+static int nr_token __attribute__((used))  = 0;      // 记录标记数量的变量
+
+// 寻找主运算符，该函数返回表示主要运算符位置的数组索引
+// p和q是给定表达式的起始和结束的索引
 static int find_major(int p, int q) {
   int ret = -1, par = 0, op_pre = 0;
   for (int i = p; i <= q; i++) {
-    if (tokens[i].type == '(') {
+    if (tokens[i].type == '(') { // 如果当前标记是左括号，par++
       par++;
-    } else if (tokens[i].type == ')') {
+    } else if (tokens[i].type == ')') { // 如果当前标记是右括号且par为0，返回-1
       if (par == 0) {
         return -1;
       }
       par--;
-    } else if (OFTYPES(tokens[i].type, nop_types)) {
+    } else if (OFTYPES(tokens[i].type, nop_types)) { // 如果当前标记的类型是nop类型，继续下一个循环
       continue;
-    } else if (par > 0) {
+    } else if (par > 0) { // 如果par大于0，继续下一个循环
       continue;
     } else {
       int tmp_pre = 0;
+      // 判断标记的类型，并附加运算优先级
       switch (tokens[i].type) {
       case TK_OR: tmp_pre++;
       case TK_AND: tmp_pre++;
@@ -123,15 +131,19 @@ static int find_major(int p, int q) {
       case TK_NEG: case TK_DEREF: case TK_POS: tmp_pre++; break;
       default: return -1;
       }
+      // 如果当前运算符的优先级高于之前保存的最高优先级，或者当前与上一个优先级相同且标记类型非op1_types
+      // 更新保存的最高优先级，将主运算符的位置保存在ret中
       if (tmp_pre > op_pre || (tmp_pre == op_pre && !OFTYPES(tokens[i].type, op1_types))) {
         op_pre = tmp_pre;
         ret = i;
       }
     }
   }
+  // 检查括弧是否匹配，如果不匹配返回-1
   if (par != 0) return -1;
   return ret;
 }
+
 
 static word_t eval_operand(int i, bool *ok) {
   switch (tokens[i].type) {
