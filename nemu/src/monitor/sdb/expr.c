@@ -237,22 +237,30 @@ static word_t calc2(word_t val1, int op, word_t val2, bool *ok) {
 }
 
 
-bool check_parentheses(int p, int q) {
-  // 检查一个子表达式的开始和结尾是否为配对的括号
-  if (tokens[p].type=='(' && tokens[q].type==')') {
-    int par = 0; // 用于检查括号是否配对的计数器
-
-    for (int i = p; i <= q; i++) {
-      // 遍历子表达式中的所有符号
-      if (tokens[i].type=='(') par++; // 如果当前符号是左括号，计数器加1
-      else if (tokens[i].type==')') par--; // 如果当前符号是右括号，计数器减1
-
-      // 如果计数器在还没有遍历完所有符号前归零，说明左括号有匹配但后续还有额外的右括号，即括号不配对
-      if (par == 0) return i==q; // 如果匹配的右括号是子表达式的最后一个符号，返回true，否则返回false
-    }
-  }
-  return false; // 如果子表达式的开始和结尾不是配对的括号，返回false
+bool check_parentheses(int p, int q){
+	int a;
+	int j = 0, k = 0;
+	if (tokens[p].type == '(' || tokens[q].type == ')'){
+		for (a = p; a <= q; a++){
+			if (tokens[a].type == '('){
+				j++;
+			}
+			if (tokens[a].type == ')'){
+				k++;
+			}
+			if (a != q && j == k){
+				return false;
+			}
+		}
+		if (j == k){
+				return true;
+			} else {
+				return false;
+			}
+	}
+	return false;
 }
+
 
 static word_t eval(int p, int q, bool *ok) {
   *ok = true;
