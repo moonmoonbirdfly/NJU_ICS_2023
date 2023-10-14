@@ -55,12 +55,19 @@ static struct rule {
 };
 
 
+// 一个函数，检查一个特定的整型"类型"是否在一个特定的整型数组"类型"中
+// type：待检查的整型值
+// types[]：整型值数组
+// size：数组的大小
 static bool oftypes(int type, int types[], int size) {
   for (int i = 0; i < size; i++) {
+    // 如果待检查的整型值在数组中，函数返回true
     if (type == types[i]) return true;
   }
+  // 如果待检查的整型值不在数组中，函数返回false
   return false;
 }
+
 #define NR_REGEX ARRLEN(rules)
 #define OFTYPES(type, types) oftypes(type, types, ARRLEN(types))
 static int bound_types[] = {')',TK_NUM,TK_REG}; // boundary for binary operator
@@ -191,7 +198,7 @@ static word_t calc1(int op, word_t val, bool *ok) {
   case TK_POS: return val;
 
   // 如果是解引用操作（TK_DEREF可能代表解引用），读取地址为val，大小为8字节的内存值
-  case TK_DEREF: return vaddr_read(val, 8);
+  case TK_DEREF: return vaddr_read(val, 4);
 
   // 对于其他未列出操作，将ok设置为false，表示失败
   default: *ok = false;
@@ -379,8 +386,6 @@ word_t expr(char *e, bool *success) {
     *success = false;
     return 0;
   }
-
-
 
   return eval(0, nr_token-1, success);
 }
