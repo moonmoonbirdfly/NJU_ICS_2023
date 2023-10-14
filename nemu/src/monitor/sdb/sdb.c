@@ -62,11 +62,22 @@ static int cmd_q(char *args) {
 	return -1;
 }
 
-static int cmd_info(char *args){
-   if(strcmp(args,"r") == 0)
-     isa_reg_display();
-   return 0;
+
+
+static int cmd_info(char *args) {
+  /* extract the first argument */
+  char *arg = strtok(NULL, " ");
+  if (arg == NULL) {
+    printf("Usage: info r (registers) or info w (watchpoints)\n");
+  } else {
+    if (strcmp(arg, "r") == 0) {
+      isa_reg_display();
+    }  }
+  
+  return 0;
 }
+
+
 
 static int cmd_x(char *args){
 char *arg1 = strtok(NULL, " ");
@@ -112,6 +123,8 @@ static int cmd_p(char* args) {
 
 
 static int cmd_help(char *args);
+
+
 
 static struct {
   const char *name;

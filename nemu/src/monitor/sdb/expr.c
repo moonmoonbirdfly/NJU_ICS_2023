@@ -252,7 +252,8 @@ static bool make_token(char *e) {
         if (rules[i].token_type == TK_NOTYPE) break;
 
         tokens[nr_token].type = rules[i].token_type;
-      switch (rules[i].token_type) {
+        nr_token++;
+switch (rules[i].token_type) {
   case TK_NUM:
   case TK_REG:
     // todo: handle overflow (token exceeding size of 32B)
@@ -270,8 +271,11 @@ static bool make_token(char *e) {
     }
     break;
 }
+
+        break;
+      }
     }
-}
+
     if (i == NR_REGEX) {
       printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
       return false;
