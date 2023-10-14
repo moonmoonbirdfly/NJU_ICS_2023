@@ -19,48 +19,73 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include <memory/vaddr.h>
+//全局变量，表示是否为批处理模式。如果是批处理模式，程序可能会在没有用户交互的情况下运行一系列指令。默认是非批处理模式。
 static int is_batch_mode = false;
 
+//初始化正则表达式功能的函数声明。
 void init_regex();
+
+//初始化wp_pool功能的函数声明，wp_pool可能是工作进程池的意思，详细功能需要看实际代码。
 void init_wp_pool();
 
-/* We use the `readline' library to provide more flexibility to read from stdin. */
+/* 使用 readline 函数应用库从标准输入获取输入行. */
 static char* rl_gets() {
+  //静态变量，用于存储在readline中读取的行。
   static char *line_read = NULL;
 
+  //如果非空，则释放上一次读取的行的内存。
   if (line_read) {
     free(line_read);
     line_read = NULL;
   }
 
+  //读取行，行起始标记是"(nemu) "。
   line_read = readline("(nemu) ");
 
+  //如果行读取成功且非空，则将该行添加到history中。
   if (line_read && *line_read) {
     add_history(line_read);
   }
 
+  //返回读取的行。
   return line_read;
 }
 
+//表示CPU执行命令 'c' 的函数，args表示参数。
 static int cmd_c(char *args) {
+  //CPU执行，参数设为-1可能表示执行全部或者无限制数量的指令。
   cpu_exec(-1);
+  //返回0，表示达到预期结果。
   return 0;
 }
 
+//表示CPU执行命令 'si' 的函数，args表示参数。
 static int cmd_si(char *args){
- int step=0;
- if(args==NULL) step=1;
- else sscanf(args,"%d",&step);
- cpu_exec(step);
- return 0;
+  //声明一个变量作为执行的步数。
+  int step=0;
+  
+  //如果没有参数传入，则运行步数为1。
+  if(args==NULL) step=1;
 
-	
+  //否则，使用sscanf将参数转为整数作为运行步数。
+  else sscanf(args,"%d",&step);
+  
+  //CPU执行，参数为步数。
+  cpu_exec(step);
+  
+  //返回0，表示达到预期结果。
+  return 0;
 }
 
+//表示命令 'q' 的函数，args表示参数，可能用于退出程序。
 static int cmd_q(char *args) {
- nemu_state.state = NEMU_QUIT;
-	return -1;
+  //设置nemu状态为QUIT，可能是表示程序被退出的状态。
+  nemu_state.state = NEMU_QUIT;
+
+  //返回-1，可能表示一个错误或异常状态。
+  return -1;
 }
+
 
 
 
