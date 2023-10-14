@@ -121,7 +121,7 @@ static int find_major(int p, int q) {
         return -1;
       }
       par--;
-    } else if (OFTYPES(tokens[i].type, nop_types)) { // 如果当前标记的类型是nop类型，继续下一个循环
+    } else if (OFTYPES(tokens[i].type, nop_types)) { // 如果当前标记的类型是正负解引用类型，继续下一个循环
       continue;
     } else if (par > 0) { // 如果par大于0，继续下一个循环
       continue;
