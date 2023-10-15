@@ -180,28 +180,33 @@ word_t eval(int p, int q, bool *ok) {
     return ret;
   } else if (check_parentheses(p, q)) {
     return eval(p+1, q-1, ok);
-  } else {    
+  }   else {    
     int major = find_major(p, q);
     if (major < 0) {
       *ok = false;
       return 0;
     }
-
-    word_t val1 = eval(p, major-1, ok);
-    if (!*ok) return 0;
-    word_t val2 = eval(major+1, q, ok);
+    
+	word_t val1 = eval(p, major-1, ok);
     if (!*ok) return 0;
     
     switch(tokens[major].type) {
-     case TK_NEG: return -eval(p, major, ok);
-      case '+': return val1 + val2;
-      case '-': return val1 - val2;
-      case '*': return val1 * val2;
-      case '/': if (val2 == 0) {
-        *ok = false;
-        return 0;
-      } 
-      return (sword_t)val1 / (sword_t)val2; // e.g. -1/2, may not pass the expr test
+      case TK_NEG: 
+        // here deal with negative number
+        return -(eval(major + 1, q, ok));
+      case '+': return val1 + eval(major+1, q, ok);
+      case '-': 
+      	// Do not re-call eval on (p, major-1)
+        return val1 - eval(major+1, q, ok);
+      case '*': return val1 * eval(major+1, q, ok);
+      case '/': 
+        word_t val2 = eval(major+1, q, ok);
+        if (val2 == 0) {
+          *ok = false;
+          return 0;
+        }
+        // Do not re-call eval on (p, major-1)
+        return val1 / val2;
       default: assert(0);
     }
   }
