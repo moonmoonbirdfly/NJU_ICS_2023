@@ -117,7 +117,7 @@ bool check_parentheses(int p, int q){
 int find_major(int p, int q) {
   int ret = -1, par = 0, op_type = 0;
   for (int i = p; i <= q; i++) {
-    if (tokens[i].type == TK_NUM) {
+    if (tokens[i].type == TK_NUM || tokens[i].type == TK_HEX) {
       continue;
     }
     if (tokens[i].type == '(') {
