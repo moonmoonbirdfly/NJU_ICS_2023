@@ -211,65 +211,72 @@ word_t eval(int p, int q, bool *ok) {
 
 
 // 定义一个函数，输入参数是一个字符指针，返回一个布尔值
-// 定义一个函数，输入参数是一个字符指针，返回一个布尔值
 static bool make_token(char *e) {
   int position = 0;
   int i;
   regmatch_t pmatch;
 
   nr_token = 0;
-
   while (e[position] != '\0') {
-    // deal with negative number
-    if(e[position] == '-') {
-    tokens[nr_token].str[0] = e[position]; 
-    tokens[nr_token].str[1] = '\0'; 
-    if (e[position+1] == '-') { // check if immediate next character is also a minus
-      tokens[nr_token].type = TK_NEG;
-      position += 2;
-    } else {
-      tokens[nr_token].type = '-';
-      position++;
-    }
-    nr_token++;
-    continue;
-  }
     /* Try all rules one by one. */
     for (i = 0; i < NR_REGEX; i ++) {
       int reg_res = regexec(&re[i], e + position, 1, &pmatch, 0);
       if (reg_res == 0 && pmatch.rm_so == 0) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
-  
-        // skip the whitespace
-        if (rules[i].token_type != TK_NOTYPE) {
-          // copy to tokens here
-          tokens[nr_token].type = rules[i].token_type;
-          strncpy(tokens[nr_token].str, substr_start, substr_len);
-          tokens[nr_token].str[substr_len] = '\0';
-          nr_token++;
-        }
+
+        // Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+        //     i, rules[i].regex, position, substr_len, substr_len, substr_start);
+        
         position += substr_len;
+        
+        if (rules[i].token_type == TK_NOTYPE) break;
+
+        tokens[nr_token].type = rules[i].token_type;
+        switch (rules[i].token_type) {
+          case TK_NUM:
+          case TK_REG:
+          case TK_VAR:
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+            // todo: handle overflow (token exceeding size of 32B)
+          case TK_HEX:
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+        	tokens[nr_token].str[substr_len] = '\0';
+
+
+    
+        }
+        nr_token++;
+
         break;
       }
     }
 
     if (i == NR_REGEX) {
-      printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
-      return false;  // tokens cannot be recognized
+      if(position == 0 && e[position] == '-') {
+        tokens[nr_token].type = TK_NEG;
+        tokens[nr_token].str[0] = '-';
+        tokens[nr_token].str[1] = '\0';
+        nr_token++;
+        position++;
+      } else {
+        printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
+        return false;
+      }   
     }
   }
 
-  return true;  // tokenize successfully
+  return true;
 }
 
 
 
 
 
-
-
-
+// 函数 'expr' 接收一个字符指针 'e' 和一个 bool 指针 'success' 作为输入
+// 'e' 可能是一个运算表达式的字符串形式，例如 "2+3*4"
+// 'success' 用于让该函数可以将运算成功与否的信息传回调用它的函数
 word_t expr(char *e, bool *success) {
   
   // 'make_token' 函数可能是用于将输入的表达式字符串 'e' 转换为一种内部表示（如标记序列）
