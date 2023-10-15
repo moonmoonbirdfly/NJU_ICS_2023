@@ -23,7 +23,7 @@
 
 // 这里定义了一些枚举常量，用于表示不同的标记类型
 enum {
-  TK_NOTYPE = 256, TK_EQ,
+  TK_NOTYPE = 256, TK_EQ,TK_NEG,
   TK_NUM, // 10 & 16
   TK_HEX,
   TK_REG,
@@ -117,6 +117,14 @@ bool check_parentheses(int p, int q){
 int find_major(int p, int q) {
   int ret = -1, par = 0, op_type = 0;
   for (int i = p; i <= q; i++) {
+      if (i != p && tokens[i].type == '-' && 
+          !(tokens[i-1].type == TK_NUM || tokens[i-1].type == TK_HEX || 
+            tokens[i-1].type == ')')) {
+          tokens[i].type = TK_NEG;
+      }
+  }
+  
+  for (int i = p; i <= q; i++) {
     if (tokens[i].type == TK_NUM || tokens[i].type == TK_HEX) {
       continue;
     }
@@ -134,6 +142,7 @@ int find_major(int p, int q) {
       switch (tokens[i].type) {
       case '*': case '/': tmp_type = 1; break;
       case '+': case '-': tmp_type = 2; break;
+      case TK_NEG: tmp_type = 3; break;
       default: 
     printf("Unexpected token type: %d\n",tokens[i].type);
     assert(0);
@@ -161,6 +170,7 @@ word_t eval(int p, int q, bool *ok) {
         return strtol(tokens[p].str, NULL, 10);   
       case TK_HEX:
         return strtol(tokens[p].str, NULL, 16);
+     
       default:
         *ok = false;
         return 0;
@@ -182,6 +192,7 @@ word_t eval(int p, int q, bool *ok) {
     if (!*ok) return 0;
     
     switch(tokens[major].type) {
+     case TK_NEG: return -eval(p, major, ok);
       case '+': return val1 + val2;
       case '-': return val1 - val2;
       case '*': return val1 * val2;
