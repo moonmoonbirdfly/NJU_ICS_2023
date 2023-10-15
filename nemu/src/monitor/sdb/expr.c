@@ -89,8 +89,6 @@ static Token tokens[32] __attribute__((used)) = {};  // 存储标记的数组
 static int nr_token __attribute__((used))  = 0;      // 记录标记数量的变量
 
 
-
-
 bool check_parentheses(int p, int q){
 	int a;
 	int j = 0, k = 0;
