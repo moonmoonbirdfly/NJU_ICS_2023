@@ -221,40 +221,35 @@ static bool make_token(char *e) {
 
   while (e[position] != '\0') {
     // deal with negative number
-    if(e[position] == '-' && 
-       (position == 0 || e[position-1] == '+' || e[position-1] == '-' ||
-        e[position-1] == '*' || e[position-1] == '/' || e[position-1] == '(')) {
-      
-      tokens[nr_token].type = TK_NEG;
-      tokens[nr_token].str[0] = e[position];  // Add this line
-      tokens[nr_token].str[1] = '\0';         // Add this line
+    if(e[position] == '-') {
+      if (position == 0 || e[position-1] == '+' || e[position-1] == '-' ||
+          e[position-1] == '*' || e[position-1] == '/' || e[position-1] == '(') {
+          tokens[nr_token].type = TK_NEG;
+      } else {
+        tokens[nr_token].type = '-';
+      }
+      tokens[nr_token].str[0] = e[position]; 
+      tokens[nr_token].str[1] = '\0'; 
+      nr_token++;
       position++;
       continue;
-    }
-
+    } 
     /* Try all rules one by one. */
     for (i = 0; i < NR_REGEX; i ++) {
       int reg_res = regexec(&re[i], e + position, 1, &pmatch, 0);
       if (reg_res == 0 && pmatch.rm_so == 0) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
-
-        position += substr_len;
-
+  
         // skip the whitespace
-        if (rules[i].token_type == TK_NOTYPE) break;
-
-        tokens[nr_token].type = rules[i].token_type;
-        switch (rules[i].token_type) {
-          case TK_NUM:
-          case TK_REG:
-          case TK_VAR:
-          case TK_HEX:
-            strncpy(tokens[nr_token].str, substr_start, substr_len);
-            tokens[nr_token].str[substr_len] = '\0';
-            break;
+        if (rules[i].token_type != TK_NOTYPE) {
+          // copy to tokens here
+          tokens[nr_token].type = rules[i].token_type;
+          strncpy(tokens[nr_token].str, substr_start, substr_len);
+          tokens[nr_token].str[substr_len] = '\0';
+          nr_token++;
         }
-        nr_token++;
+        position += substr_len;
         break;
       }
     }
@@ -267,6 +262,7 @@ static bool make_token(char *e) {
 
   return true;  // tokenize successfully
 }
+
 
 
 
