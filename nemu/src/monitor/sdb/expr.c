@@ -134,7 +134,7 @@ int find_major(int p, int q) {
       switch (tokens[i].type) {
       case '*': case '/': tmp_type = 1; break;
       case '+': case '-': tmp_type = 2; break;
-      default: assert(1);
+      default: assert(0);
       }
       if (tmp_type >= op_type) {
         op_type = tmp_type;
@@ -225,10 +225,9 @@ static bool make_token(char *e) {
             tokens[nr_token].str[substr_len] = '\0';
             // todo: handle overflow (token exceeding size of 32B)
           case TK_HEX:
-    tokens[nr_token].str[0] = '0';
-    strncpy(tokens[nr_token].str + 1, substr_start, substr_len - 1);
-    tokens[nr_token].str[substr_len] = '\0';
-    // todo: handle overflow (token exceeding size of 32B)
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+        tokens[nr_token].str[substr_len] = '\0';
+
 
     
         }
