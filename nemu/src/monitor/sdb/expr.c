@@ -41,7 +41,7 @@ static struct rule {
 
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
-  {"-", '-'},
+  {"-", TK_NEG},
   {"\\*", '*'},
   {"/", '/'},
   {"==", TK_EQ},        // equal
@@ -271,12 +271,6 @@ static bool make_token(char *e) {
 }
 
 
-
-
-
-// 函数 'expr' 接收一个字符指针 'e' 和一个 bool 指针 'success' 作为输入
-// 'e' 可能是一个运算表达式的字符串形式，例如 "2+3*4"
-// 'success' 用于让该函数可以将运算成功与否的信息传回调用它的函数
 word_t expr(char *e, bool *success) {
   
   // 'make_token' 函数可能是用于将输入的表达式字符串 'e' 转换为一种内部表示（如标记序列）
