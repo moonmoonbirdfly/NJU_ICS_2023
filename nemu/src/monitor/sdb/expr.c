@@ -189,7 +189,11 @@ word_t eval(int p, int q, bool *ok) {
         return 0;
       } 
       return (sword_t)val1 / (sword_t)val2; // e.g. -1/2, may not pass the expr test
-      default: assert(0);
+      case TK_NUM: return strtol(tokens[major].str, NULL, 10); 
+  	case TK_HEX: return strtol(tokens[major].str, NULL, 16); 
+  case TK_REG: /* handle register value */ 
+  case TK_VAR: /* handle variable */ 
+  default: assert(0);
     }
   }
 }
