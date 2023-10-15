@@ -220,15 +220,6 @@ static bool make_token(char *e) {
   nr_token = 0;
 
   while (e[position] != '\0') {
-    // deal with negative number
-    if(e[position] == '-' && 
-       (position == 0 || e[position-1] == '+' || e[position-1] == '-' ||
-        e[position-1] == '*' || e[position-1] == '/' || e[position-1] == '(')) {
-      tokens[nr_token].type = TK_NEG;
-      position++;
-      continue;
-    }
-
     /* Try all rules one by one. */
     for (i = 0; i < NR_REGEX; i ++) {
       int reg_res = regexec(&re[i], e + position, 1, &pmatch, 0);
@@ -236,12 +227,16 @@ static bool make_token(char *e) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        position += substr_len;
-
-        // skip the whitespace
-        if (rules[i].token_type == TK_NOTYPE) break;
-
-        tokens[nr_token].type = rules[i].token_type;
+        // set type of "-"
+        if (rules[i].token_type == '-' && position > 0 && 
+            (tokens[nr_token - 1].type == '*' || tokens[nr_token - 1].type == '+' || 
+             tokens[nr_token - 1].type == '-' || tokens[nr_token - 1].type == '/' || 
+             tokens[nr_token - 1].type == '(')) {
+          tokens[nr_token].type = TK_NEG;
+        } else {
+          tokens[nr_token].type = rules[i].token_type;
+        }
+        
         switch (rules[i].token_type) {
           case TK_NUM:
           case TK_REG:
@@ -250,20 +245,30 @@ static bool make_token(char *e) {
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
             break;
+          default:
+            break;
         }
+        
+        position += substr_len;
+        // Skip the whitespace
+        if (rules[i].token_type == TK_NOTYPE) break;
+
         nr_token++;
         break;
       }
     }
 
     if (i == NR_REGEX) {
+      // tokens cannot be recognized
       printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
-      return false;  // tokens cannot be recognized
+      return false;
     }
   }
 
-  return true;  // tokenize successfully
+  // Tokenize successfully
+  return true;
 }
+
 
 
 
