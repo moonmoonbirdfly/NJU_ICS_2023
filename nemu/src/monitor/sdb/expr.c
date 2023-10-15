@@ -156,11 +156,12 @@ word_t eval(int p, int q, bool *ok) {
     *ok = false;
     return 0;
   } else if (p == q) {
-    if (tokens[p].type == TK_HEX) {
-        *ok = true;
-        word_t ret = strtol(tokens[p].str, NULL, 16);
-        return ret;
-    } else if (tokens[p].type != TK_NUM) {
+    switch (tokens[p].type) {
+      case TK_NUM:
+        return strtol(tokens[p].str, NULL, 10);   
+      case TK_HEX:
+        return strtol(tokens[p].str, NULL, 16);
+      default:
         *ok = false;
         return 0;
     }
