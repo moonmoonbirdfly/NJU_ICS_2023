@@ -171,7 +171,7 @@ word_t eval(int p, int q, bool *ok) {
       case TK_HEX:
         return strtol(tokens[p].str, NULL, 16);
       case TK_NEG:
-        return strtol(tokens[p].str+1, NULL, 10) * (-1);  // When token is negative number
+        return -strtol(tokens[p].str+1, NULL, 10);  // When token is negative number
       default:
         *ok = false;
         return 0;
@@ -263,7 +263,7 @@ static bool make_token(char *e) {
       } else {
         printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
         return false;
-      }  
+      }   
     }
   }
 
