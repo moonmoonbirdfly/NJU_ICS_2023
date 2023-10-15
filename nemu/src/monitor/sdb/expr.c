@@ -175,34 +175,22 @@ word_t eval(int p, int q, bool *ok) {
       return 0;
     }
 
-    word_t val1, val2;
-
-if (tokens[p].type == TK_HEX) {
-    val1 = strtol(tokens[p].str, NULL, 16);
-} else {
-    val1 = eval(p, major-1, ok);
-}
-if (!*ok) return 0;
-
-if (tokens[q].type == TK_HEX) {
-    val2 = strtol(tokens[q].str, NULL, 16);
-} else {
-    val2 = eval(major+1, q, ok);
-}
-if (!*ok) return 0;
-
-switch(tokens[major].type) {
-  case '+': return val1 + val2;
-  case '-': return val1 - val2;
-  case '*': return val1 * val2;
-  case '/': if (val2 == 0) {
-      *ok = false;
-      return 0;
-  } 
-  return (sword_t)val1 / (sword_t)val2; 
-  default: assert(0);
-}
-
+    word_t val1 = eval(p, major-1, ok);
+    if (!*ok) return 0;
+    word_t val2 = eval(major+1, q, ok);
+    if (!*ok) return 0;
+    
+    switch(tokens[major].type) {
+      case '+': return val1 + val2;
+      case '-': return val1 - val2;
+      case '*': return val1 * val2;
+      case '/': if (val2 == 0) {
+        *ok = false;
+        return 0;
+      } 
+      return (sword_t)val1 / (sword_t)val2; // e.g. -1/2, may not pass the expr test
+      default: assert(0);
+    }
   }
 }
 
