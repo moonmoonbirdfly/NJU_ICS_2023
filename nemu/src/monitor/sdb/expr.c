@@ -153,9 +153,13 @@ word_t eval(int p, int q, bool *ok) {
     *ok = false;
     return 0;
   } else if (p == q) {
-    if (tokens[p].type != TK_NUM) {
-      *ok = false;
-      return 0;
+    if (tokens[p].type == TK_HEX) {
+        *ok = true;
+        word_t ret = strtol(tokens[p].str, NULL, 16);
+        return ret;
+    } else if (tokens[p].type != TK_NUM) {
+        *ok = false;
+        return 0;
     }
     word_t ret = strtol(tokens[p].str, NULL, 10);
     return ret;
@@ -221,9 +225,11 @@ static bool make_token(char *e) {
             tokens[nr_token].str[substr_len] = '\0';
             // todo: handle overflow (token exceeding size of 32B)
           case TK_HEX:
-    		strncpy(tokens[nr_token].str, substr_start, substr_len);
-    		tokens[nr_token].str[substr_len] = '\0';
-    		// You might want to convert the hexadecimal to decimal here
+    tokens[nr_token].str[0] = '0';
+    strncpy(tokens[nr_token].str + 1, substr_start, substr_len - 1);
+    tokens[nr_token].str[substr_len] = '\0';
+    // todo: handle overflow (token exceeding size of 32B)
+
     
         }
         nr_token++;
