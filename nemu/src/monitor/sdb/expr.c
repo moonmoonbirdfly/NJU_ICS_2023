@@ -25,6 +25,7 @@
 enum {
   TK_NOTYPE = 256, TK_EQ,
   TK_NUM, // 10 & 16
+  TK_HEX,
   TK_REG,
   TK_VAR,
 };
@@ -46,7 +47,7 @@ static struct rule {
   {"==", TK_EQ},        // equal
   {"\\(", '('},
   {"\\)", ')'},
-
+  {"0x[A-Fa-f0-9]+", TK_HEX}, 
   {"[0-9]+", TK_NUM}, // TODO: non-capture notation (?:pattern) makes compilation failed
   {"\\$\\w+", TK_REG},
   {"[A-Za-z_]\\w*", TK_VAR},
@@ -219,6 +220,11 @@ static bool make_token(char *e) {
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
             // todo: handle overflow (token exceeding size of 32B)
+          case TK_HEX:
+    		strncpy(tokens[nr_token].str, substr_start, substr_len);
+    		tokens[nr_token].str[substr_len] = '\0';
+    		// You might want to convert the hexadecimal to decimal here
+    
         }
         nr_token++;
 
