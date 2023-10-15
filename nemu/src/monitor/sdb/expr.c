@@ -224,7 +224,10 @@ static bool make_token(char *e) {
     if(e[position] == '-' && 
        (position == 0 || e[position-1] == '+' || e[position-1] == '-' ||
         e[position-1] == '*' || e[position-1] == '/' || e[position-1] == '(')) {
+      
       tokens[nr_token].type = TK_NEG;
+      tokens[nr_token].str[0] = e[position];  // Add this line
+      tokens[nr_token].str[1] = '\0';         // Add this line
       position++;
       continue;
     }
@@ -264,6 +267,7 @@ static bool make_token(char *e) {
 
   return true;  // tokenize successfully
 }
+
 
 
 
