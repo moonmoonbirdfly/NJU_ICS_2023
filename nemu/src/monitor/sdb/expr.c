@@ -170,7 +170,8 @@ word_t eval(int p, int q, bool *ok) {
         return strtol(tokens[p].str, NULL, 10);   
       case TK_HEX:
         return strtol(tokens[p].str, NULL, 16);
-     return strtol(tokens[p].str+1, NULL, 10) * (-1);
+      case TK_NEG:
+        return strtol(tokens[p].str+1, NULL, 10) * (-1);  // When token is negative number
       default:
         *ok = false;
         return 0;
