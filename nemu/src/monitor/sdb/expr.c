@@ -170,7 +170,7 @@ word_t eval(int p, int q, bool *ok) {
         return strtol(tokens[p].str, NULL, 10);   
       case TK_HEX:
         return strtol(tokens[p].str, NULL, 16);
-     
+     return strtol(tokens[p].str+1, NULL, 10) * (-1);
       default:
         *ok = false;
         return 0;
@@ -253,8 +253,16 @@ static bool make_token(char *e) {
     }
 
     if (i == NR_REGEX) {
-      printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
-      return false;
+      if(position == 0 && e[position] == '-') {
+        tokens[nr_token].type = TK_NEG;
+        tokens[nr_token].str[0] = '-';
+        tokens[nr_token].str[1] = '\0';
+        nr_token++;
+        position++;
+      } else {
+        printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
+        return false;
+      }  
     }
   }
 
