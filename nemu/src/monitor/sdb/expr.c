@@ -134,7 +134,7 @@ int find_major(int p, int q) {
       switch (tokens[i].type) {
       case '*': case '/': tmp_type = 1; break;
       case '+': case '-': tmp_type = 2; break;
-      default: assert(0);
+      default: assert(1);
       }
       if (tmp_type >= op_type) {
         op_type = tmp_type;
