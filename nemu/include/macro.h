@@ -83,18 +83,18 @@
 // NOTE2: each element in the container can be a tuple
 #define MAP(c, f) c(f)
 
-#define BITMASK(bits) ((1ull << (bits)) - 1)
-#define BITS(x, hi, lo) (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // similar to x[hi:lo] in verilog
-#define SEXT(x, len) ({ struct { int64_t n : len; } __x = { .n = x }; (uint64_t)__x.n; })
+#define BITMASK(bits) ((1ull << (bits)) - 1) // 创建位掩码
+#define BITS(x, hi, lo) (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // 提取x的位段
+#define SEXT(x, len) ({ struct { int64_t n : len; } __x = { .n = x }; (uint64_t)__x.n; }) // 符号扩展
 
-#define ROUNDUP(a, sz)   ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1))
-#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz) - 1))
+#define ROUNDUP(a, sz)   ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1)) // 向上取整到sz的倍数
+#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz) - 1)) // 向下取整到sz的倍数
 
-#define PG_ALIGN __attribute((aligned(4096)))
+#define PG_ALIGN __attribute((aligned(4096))) // 页面对齐
 
 #if !defined(likely)
-#define likely(cond)   __builtin_expect(cond, 1)
-#define unlikely(cond) __builtin_expect(cond, 0)
+#define likely(cond)   __builtin_expect(cond, 1) // 条件表达式可能为真
+#define unlikely(cond) __builtin_expect(cond, 0) // 条件表达式可能为假
 #endif
 
 // for AM IOE
