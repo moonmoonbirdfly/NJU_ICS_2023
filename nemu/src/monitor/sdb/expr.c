@@ -211,49 +211,55 @@ word_t eval(int p, int q, bool *ok) {
 
 
 // 定义一个函数，输入参数是一个字符指针，返回一个布尔值
+// 对输入的字符串（例如，表达式或命令）进行令牌（token）处理的函数
 static bool make_token(char *e) {
-  int position = 0;
-  int i;
-  regmatch_t pmatch;
+  int position = 0;   // 初始化当前读取的字符的位置
+  int i;              // 用于循环的变量
+  regmatch_t pmatch;  // 用于存放匹配的正则表达式结果的结构体
 
-  nr_token = 0;
-  while (e[position] != '\0') {
-    /* Try all rules one by one. */
+  nr_token = 0;       // 初始化令牌的数量
+  while (e[position] != '\0') {   // 当没有读取到字符串的末尾时，继续处理
+    // 尝试所有的规则
     for (i = 0; i < NR_REGEX; i ++) {
+      // 对当前规则的正则表达式进行含义和匹配
       int reg_res = regexec(&re[i], e + position, 1, &pmatch, 0);
+      // 如果匹配成功且匹配的开始位置在字符串的开始处
       if (reg_res == 0 && pmatch.rm_so == 0) {
-        char *substr_start = e + position;
-        int substr_len = pmatch.rm_eo;
+        char *substr_start = e + position;  // 指向匹配字符串的开始处
+        int substr_len = pmatch.rm_eo;     // 匹配的字符串的长度
 
-        // Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-        //     i, rules[i].regex, position, substr_len, substr_len, substr_start);
-        
+        // 记录匹配的字符串之后的位置
         position += substr_len;
-        
+
+        // 如果匹配的是一个空字符（没有类型），则跳过这个字符
         if (rules[i].token_type == TK_NOTYPE) break;
 
+        // 在令牌列表中存储匹配到的令牌的类型
         tokens[nr_token].type = rules[i].token_type;
+
+        // 直接复制类型为数字、寄存器、变量的值
         switch (rules[i].token_type) {
           case TK_NUM:
           case TK_REG:
           case TK_VAR:
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
-            // todo: handle overflow (token exceeding size of 32B)
+            // todo: 处理溢出（令牌超过32B的情况）
           case TK_HEX:
             strncpy(tokens[nr_token].str, substr_start, substr_len);
-        	tokens[nr_token].str[substr_len] = '\0';
-
-
-    
+            tokens[nr_token].str[substr_len] = '\0';
         }
+        // 递增记数器
         nr_token++;
 
+        // 跳出此次循环
         break;
       }
     }
 
+    // 如果所有规则都没有匹配
     if (i == NR_REGEX) {
+      // 如果在字符串的开始处出现'-'字符，视为一元的负号
       if(position == 0 && e[position] == '-') {
         tokens[nr_token].type = TK_NEG;
         tokens[nr_token].str[0] = '-';
@@ -261,14 +267,14 @@ static bool make_token(char *e) {
         nr_token++;
         position++;
       } else {
+        // 在其他位置没有找到匹配，返回错误
         printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
         return false;
       }   
     }
   }
-
-  return true;
 }
+
 
 
 
