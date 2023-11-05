@@ -97,5 +97,5 @@ finish: /* 定义一个标签，用于跳转 */
 } while (0) /* 结束宏定义 */
 
 #define INSTPAT_START(name) { const void ** __instpat_end = &&concat(__instpat_end_, name); /* 定义一个宏，用于开始一个模式匹配的区域，参数是一个名称，用于生成结束标签 */ 
-#define INSTPAT_END(name)   concat(__instpat_end_, name): ; } /* 定义一个*/
+#define INSTPAT_END(name)   concat(__instpat_end_, name): ; } /*定义一个宏，用于结束一个模式匹配的区域，参数是一个名称，用于生成结束标签*/
 #endif
