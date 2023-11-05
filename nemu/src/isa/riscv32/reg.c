@@ -31,8 +31,17 @@ for(int i = 0; i< 32 ;i++)
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
-
-  return 0;
+  // 定义一个函数，用于根据寄存器的名称返回其当前值，参数是一个字符串指针和一个布尔指针
+  for (int i = 0; i < 32; i++) { // 用一个循环，遍历 32 个寄存器的名称
+    if (strcmp(s, regs[i]) == 0) { // 如果字符串 s 和第 i 个寄存器的名称相等，说明找到了对应的寄存器
+      *success = true; // 设置 success 指针指向的变量的值为 true，表示找到了寄存器
+      return cpu.gpr[i]; // 返回 cpu 结构体中的第 i 个寄存器的值
+    }
+  }
+  // 如果循环结束后没有找到对应的寄存器，说明 s 不是一个有效的寄存器名称
+  *success = false; // 设置 success 指针指向的变量的值为 false，表示没有找到寄存器
+  return 0; // 返回 0，表示无效的值
 }
+
 
 
