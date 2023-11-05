@@ -17,10 +17,11 @@
 
 #include <memory/vaddr.h>
 
-static inline uint32_t inst_fetch(vaddr_t *pc, int len) {
-  uint32_t inst = vaddr_ifetch(*pc, len);
-  (*pc) += len;
-  return inst;
+static inline uint32_t inst_fetch(vaddr_t *pc, int len) { // 定义一个静态内联函数，用于从虚拟地址空间中取出指令，参数是一个虚拟地址指针和一个整数，表示指令的长度
+  uint32_t inst = vaddr_ifetch(*pc, len); // 定义一个无符号的 32 位整数，用于存放指令的值，调用 vaddr_ifetch 函数，传递虚拟地址指针指向的地址和指令的长度，从虚拟地址空间中取出指令
+  (*pc) += len; // 把虚拟地址指针指向的地址增加指令的长度，表示指向下一条指令的地址
+  return inst; // 返回指令的值
 }
+
 
 #endif
