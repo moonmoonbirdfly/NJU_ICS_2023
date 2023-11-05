@@ -13,24 +13,24 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
-#ifndef __CPU_DECODE_H__
-#define __CPU_DECODE_H__
+#ifndef __CPU_DECODE_H__ // 如果没有定义 __CPU_DECODE_H__ 这个宏，就执行下面的代码
+#define __CPU_DECODE_H__ // 定义 __CPU_DECODE_H__ 这个宏，用于防止重复包含这个头文件
 
-#include <isa.h>
+#include <isa.h> // 包含一个根据不同的 ISA 定义的头文件，例如 x86 或 mips32
 
-typedef struct Decode {
-  vaddr_t pc;
-  vaddr_t snpc; // static next pc
-  vaddr_t dnpc; // dynamic next pc
-  ISADecodeInfo isa;
-  IFDEF(CONFIG_ITRACE, char logbuf[128]);
-} Decode;
+typedef struct Decode { // 定义一个结构体类型，用于存放指令的解码信息
+  vaddr_t pc; // 定义一个变量，用于存放指令的地址
+  vaddr_t snpc; // static next pc // 定义一个变量，用于存放静态的下一条指令的地址
+  vaddr_t dnpc; // dynamic next pc // 定义一个变量，用于存放动态的下一条指令的地址
+  ISADecodeInfo isa; // 定义一个变量，用于存放 ISA 的解码信息，例如指令的原始值或分解后的字段
+  IFDEF(CONFIG_ITRACE, char logbuf[128]); // 如果定义了 CONFIG_ITRACE 宏，就定义一个字符数组，用于存放指令的日志信息
+} Decode; // 给这个结构体类型取一个名字，叫 Decode
 
-// --- pattern matching mechanism ---
-__attribute__((always_inline))
-static inline void pattern_decode(const char *str, int len,
-    uint64_t *key, uint64_t *mask, uint64_t *shift) {
-  uint64_t __key = 0, __mask = 0, __shift = 0;
+// --- pattern matching mechanism --- // 这是一个注释，表示下面的代码是用于实现指令的模式匹配的机制
+__attribute__((always_inline)) // 这是一个属性，表示这个函数总是被内联，即在调用时用函数体替换函数名，以减少函数调用的开销
+static inline void pattern_decode(const char *str, int len, // 定义一个静态内联函数，用于解码指令的模式，参数是一个字符串和它的长度
+    uint64_t *key, uint64_t *mask, uint64_t *shift) { // 还有三个指针，用于返回解码后的关键字、掩码和位移
+  uint64_t __key = 0, __mask = 0, __shift = 0; // 定义三个局部变量，用于存放解码过程中的关键字、掩码和位移
 #define macro(i) \
   if ((i) >= len) goto finish; \
   else { \
