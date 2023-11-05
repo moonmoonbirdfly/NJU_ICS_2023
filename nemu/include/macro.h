@@ -91,7 +91,7 @@
 #define MAP(c, f) c(f)
 
 #define BITMASK(bits) ((1ull << (bits)) - 1) // 创建位掩码
-#define BITS(x, hi, lo) (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // 提取x的位段
+#define BITS(x, hi, lo) (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // 提取x的位段(hi --> lo)
 #define SEXT(x, len) ({ struct { int64_t n : len; } __x = { .n = x }; (uint64_t)__x.n; }) // 符号扩展
 
 #define ROUNDUP(a, sz)   ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1)) // 向上取整到sz的倍数
