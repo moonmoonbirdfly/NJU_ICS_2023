@@ -25,62 +25,63 @@
  */
 #define MAX_INST_TO_PRINT 2147483647
 
-CPU_state cpu = {};
-uint64_t g_nr_guest_inst = 0;
-static uint64_t g_timer = 0; // unit: us
-static bool g_print_step = false;
+CPU_state cpu = {}; // 定义一个结构体变量，用于存放 CPU 的状态，例如寄存器的值
+uint64_t g_nr_guest_inst = 0; // 定义一个全局变量，用于统计执行的指令数
+static uint64_t g_timer = 0; // unit: us // 定义一个静态变量，用于记录模拟器的运行时间，单位是微秒
+static bool g_print_step = false; // 定义一个静态变量，用于控制是否打印每条指令的信息
 
-void device_update();
+void device_update(); // 声明一个函数，用于更新设备的状态，例如键盘、鼠标、屏幕等
 
-static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
-#ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+static void trace_and_difftest(Decode *_this, vaddr_t dnpc) { // 定义一个静态函数，用于跟踪和对比测试指令，参数是一个解码结构体和动态的下一条指令的地址
+#ifdef CONFIG_ITRACE_COND // 如果定义了 CONFIG_ITRACE_COND 这个宏，表示开启了指令跟踪的条件
+  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); } // 如果满足指令跟踪的条件，就把解码结构体中的日志缓冲区写入到日志文件中
 #endif
-  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
-  IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
+  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); } // 如果开启了打印每条指令的信息，就把解码结构体中的日志缓冲区输出到标准输出中
+  IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc)); // 如果开启了对比测试，就调用 difftest_step 函数，传递当前指令的地址和动态的下一条指令的地址，用于和参考模拟器进行比较
 }
 
-static void exec_once(Decode *s, vaddr_t pc) {
-  s->pc = pc;
-  s->snpc = pc;
-  isa_exec_once(s);
-  cpu.pc = s->dnpc;
-#ifdef CONFIG_ITRACE
-  char *p = s->logbuf;
-  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-  int ilen = s->snpc - s->pc;
+static void exec_once(Decode *s, vaddr_t pc) { // 定义一个静态函数，用于执行一条指令，参数是一个解码结构体和指令的地址
+  s->pc = pc; // 把指令的地址赋值给解码结构体中的 pc 变量
+  s->snpc = pc; // 把指令的地址赋值给解码结构体中的 snpc 变量，表示静态的下一条指令的地址
+  isa_exec_once(s); // 调用 isa_exec_once 函数，根据不同的 ISA 执行一条指令，更新解码结构体中的信息
+  cpu.pc = s->dnpc; // 把解码结构体中的 dnpc 变量，表示动态的下一条指令的地址，赋值给 CPU 状态中的 pc 变量
+#ifdef CONFIG_ITRACE // 如果定义了 CONFIG_ITRACE 这个宏，表示开启了指令跟踪
+  char *p = s->logbuf; // 定义一个字符指针，指向解码结构体中的日志缓冲区
+  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc); // 把指令的地址格式化输出到日志缓冲区中，更新指针的位置
+  int ilen = s->snpc - s->pc; // 计算指令的长度，等于静态的下一条指令的地址减去当前指令的地址
   int i;
-  uint8_t *inst = (uint8_t *)&s->isa.inst.val;
-  for (i = ilen - 1; i >= 0; i --) {
-    p += snprintf(p, 4, " %02x", inst[i]);
+  uint8_t *inst = (uint8_t *)&s->isa.inst.val; // 定义一个字节指针，指向解码结构体中的指令的原始值
+  for (i = ilen - 1; i >= 0; i --) { // 从高位到低位遍历指令的字节
+    p += snprintf(p, 4, " %02x", inst[i]); // 把指令的每个字节以十六进制格式输出到日志缓冲区中，更新指针的位置
   }
-  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
-  int space_len = ilen_max - ilen;
-  if (space_len < 0) space_len = 0;
-  space_len = space_len * 3 + 1;
-  memset(p, ' ', space_len);
-  p += space_len;
+  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4); // 根据不同的 ISA 定义指令的最大长度，x86 是 8 字节，其他是 4 字节
+  int space_len = ilen_max - ilen; // 计算指令的空白长度，等于最大长度减去实际长度
+  if (space_len < 0) space_len = 0; // 如果空白长度小于 0，就置为 0
+  space_len = space_len * 3 + 1; // 计算空白占用的字符数，等于空白长度乘以 3 加 1，因为每个字节占两个字符和一个空格，最后还有一个空格
+  memset(p, ' ', space_len); // 用空格填充日志缓冲区中的空白部分
+  p += space_len; // 更新指针的位置
 
-#ifndef CONFIG_ISA_loongarch32r
-  void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-  disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
+#ifndef CONFIG_ISA_loongarch32r // 如果没有定义 CONFIG_ISA_loongarch32r 这个宏，表示不支持 loongarch32r 这种 ISA
+  void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte); // 声明一个函数，用于反汇编指令，参数是一个字符串指针，一个字符串的大小，一个指令的地址，一个指令的字节指针，一个指令的字节数
+  disassemble(p, s->logbuf + sizeof(s->logbuf) - p, // 调用反汇编函数，把反汇编的结果输出到日志缓冲区中，更新指针的位置
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
 #else
-  p[0] = '\0'; // the upstream llvm does not support loongarch32r
+  p[0] = '\0'; // the upstream llvm does not support loongarch32r // 如果支持 loongarch32r 这种 ISA，就把日志缓冲区的第一个字符置为 '\0'，表示空字符串，因为上游的 llvm 不支持这种 ISA 的反汇编
 #endif
 #endif
 }
 
-static void execute(uint64_t n) {
-  Decode s;
-  for (;n > 0; n --) {
-    exec_once(&s, cpu.pc);
-    g_nr_guest_inst ++;
-    trace_and_difftest(&s, cpu.pc);
-    if (nemu_state.state != NEMU_RUNNING) break;
-    IFDEF(CONFIG_DEVICE, device_update());
+static void execute(uint64_t n) { // 定义一个静态函数，用于执行 n 条指令，参数是一个无符号的 64 位整数
+  Decode s; // 定义一个解码结构体变量，用于存放指令的解码信息
+  for (;n > 0; n --) { // 用一个循环，从 n 到 0，每次减 1
+    exec_once(&s, cpu.pc); // 调用 exec_once 函数，执行一条指令，传递解码结构体的指针和 CPU 状态中的 pc 变量
+    g_nr_guest_inst ++; // 把全局变量 g_nr_guest_inst 加 1，表示执行的指令数增加
+    trace_and_difftest(&s, cpu.pc); // 调用 trace_and_difftest 函数，跟踪和对比测试指令，传递解码结构体的指针和 CPU 状态中的 pc 变量
+    if (nemu_state.state != NEMU_RUNNING) break; // 如果模拟器的状态不是运行中，就跳出循环
+    IFDEF(CONFIG_DEVICE, device_update()); // 如果开启了设备模拟，就调用 device_update 函数，更新设备的状态
   }
 }
+
 
 static void statistic() {
   IFNDEF(CONFIG_TARGET_AM, setlocale(LC_NUMERIC, ""));
