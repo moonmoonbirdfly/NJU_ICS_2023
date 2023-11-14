@@ -49,7 +49,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
     case TYPE_I: src1R();          immI(); break; // I 型指令，获取源寄存器 1 和立即数
     case TYPE_U:                   immU(); break; // U 型指令，获取立即数
     case TYPE_S: src1R(); src2R(); immS(); break; // S 型指令，获取源寄存器 1、源寄存器 2 和立即数
-    case TYPE_R: src1R(); src2R(); break; // R 型指令，获取源寄存器 1 和源寄存器 2
+    case TYPE_R: src1R(); src2R(); 	   break; // R 型指令，获取源寄存器 1 和源寄存器 2
     case TYPE_B: src1R(); src2R(); immB(); break; // B 型指令，获取源寄存器 1、源寄存器 2 和立即数
     case TYPE_J:                   immJ(); break; // J 型指令，获取立即数
   }
@@ -113,6 +113,21 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? ??? ????? 11101 11", bge    , B, if ((sword_t)src1 >= (sword_t)src2) s->dnpc = s->pc + imm); // 匹配 bge 指令，执行 if ((sword_t)src1 >= (sword_t)src2) s->dnpc = s->pc + imm) 的操作
   INSTPAT("??????? ????? ????? ??? ????? 11110 11", bltu   , B, if (src1 < src2) s->dnpc = s->pc + imm); // 匹配 bltu 指令，执行 if (src1 < src2) s->dnpc = s->pc + imm) 的操作
   INSTPAT("??????? ????? ????? ??? ????? 11111 11", bgeu   , B, if (src1 >= src2) s->dnpc = s->pc + imm); // 匹配 bgeu 指令，执行 if (src1 >= src2) s->dnpc = s->pc + imm) 的操作
+  INSTPAT("??????? ????? ????? 110 ????? 00000 11", lwu    , I, R(rd) = SEXT(Mr(src1 + imm, 4), 32)); // 匹配 lwu 指令，执行 R(rd) = SEXT(Mr(src1 + imm, 4), 32) 的操作
+  INSTPAT("??????? ????? ????? 011 ????? 00000 11", ld     , I, R(rd) = Mr(src1 + imm, 8)); // 匹配 ld 指令，执行 R(rd) = Mr(src1 + imm, 8) 的操作
+  INSTPAT("??????? ????? ????? 011 ????? 01000 11", sd     , S, Mw(src1 + imm, 8, src2)); // 匹配 sd 指令，执行 Mw(src1 + imm, 8, src2) 的操作
+  INSTPAT("0100000 ????? ????? 000 ????? 01110 11", subw   , R, R(rd) = SEXT(src1 - src2, 32)); // 匹配 subw 指令，执行 R(rd) = SEXT(src1 - src2, 32) 的操作
+  INSTPAT("0100000 ????? ????? 101 ????? 01110 11", sraw   , I, R(rd) = SEXT((sword_t)src1 >> (imm & 0x1f), 32)); // 匹配 sraw 指令，执行 R(rd) = SEXT((sword_t)src1 >> (imm & 0x1f), 32) 的操作
+  
+  INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = src1 * src2); // 匹配 mul 指令，执行 R(rd) = src1 * src2 的操作 
+//  INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = (sword_t)src1 * (sword_t)src2 >> 32); // 匹配 mulh 指令，执行 R(rd) = (sword_t)src1 * (sword_t)src2 >> 32 的操作 
+//  INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu , R, R(rd) = (sword_t)src1 * src2 >> 32); // 匹配 mulhsu 指令，执行 R(rd) = (sword_t)src1 * src2 >> 32 的操作 
+// INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = src1 * src2 >> 32); // 匹配 mulhu 指令，执行 R(rd) = src1 * src2 >> 32 的操作 
+  INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, R(rd) = src1 / src2); // 匹配 div 指令，执行 R(rd) = src1 / src2 的操作 
+  INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, R(rd) = (word_t)src1 / (word_t)src2); // 匹配 divu 指令，执行 R(rd) = (word_t)src1 / (word_t)src2 的操作 
+  INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = src1 % src2); // 匹配 rem 指令，执行 R(rd) = src1 % src2 的操作 
+  INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = (word_t)src1 % (word_t)src2); // 匹配 remu 指令，执行 R(rd) = (word_t)src1 % (word_t)src2 的操作
+// INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall, N, ECALL(s->pc)); // 匹配 ecall 指令，执行 ECALL(s->pc) 的操作，其中 ECALL 是你需要实现的环境调用处理函数
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0 // 匹配 ebreak 指令，执行 NEMUTRAP(s->pc, R(10)) 的操作，其中 R(10) 是 $a0
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc)); // 匹配无效指令，执行 INV(s->pc) 的操作
   INSTPAT_END(); // 定义一个宏，用于结束匹配指令
