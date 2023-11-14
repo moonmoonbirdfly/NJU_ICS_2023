@@ -121,8 +121,8 @@ static int decode_exec(Decode *s) {
   
   INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = src1 * src2); // 匹配 mul 指令，执行 R(rd) = src1 * src2 的操作 
   INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = (long long)src1 * (long long)src2 >> 32); // 匹配 mulh 指令，执行 R(rd) = (sword_t)src1 * (sword_t)src2 >> 32 的操作 
-  INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu , R, R(rd) = (uint64_t)src1 * src2 >> 32); // 匹配 mulhsu 指令，执行 R(rd) = (sword_t)src1 * src2 >> 32 的操作 
-  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = (uint64_t)src1 * src2 >> 32); // 匹配 mulhu 指令，执行 R(rd) = src1 * src2 >> 32 的操作 
+  INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu , R, R(rd) = (uint64_t)src1 * (long long)src2 >> 32); // 匹配 mulhsu 指令，执行 R(rd) = (sword_t)src1 * src2 >> 32 的操作 
+  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = (uint64_t)src1 * (uint64_t)src2 >> 32); // 匹配 mulhu 指令，执行 R(rd) = src1 * src2 >> 32 的操作 
   INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, R(rd) = src1 / src2); // 匹配 div 指令，执行 R(rd) = src1 / src2 的操作 
   INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, R(rd) = (word_t)src1 / (word_t)src2); // 匹配 divu 指令，执行 R(rd) = (word_t)src1 / (word_t)src2 的操作 
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = src1 % src2); // 匹配 rem 指令，执行 R(rd) = src1 % src2 的操作 
