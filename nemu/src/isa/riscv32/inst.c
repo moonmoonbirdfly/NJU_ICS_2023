@@ -127,7 +127,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, R(rd) = (word_t)src1 / (word_t)src2); // 匹配 divu 指令，执行 R(rd) = (word_t)src1 / (word_t)src2 的操作 
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = src1 % src2); // 匹配 rem 指令，执行 R(rd) = src1 % src2 的操作 
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = (word_t)src1 % (word_t)src2); // 匹配 remu 指令，执行 R(rd) = (word_t)src1 % (word_t)src2 的操作
-// INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall, N, ECALL(s->pc)); // 匹配 ecall 指令，执行 ECALL(s->pc) 的操作，其中 ECALL 是你需要实现的环境调用处理函数
+ //INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall, N, ECALL(s->pc)); // 匹配 ecall 指令，执行 ECALL(s->pc) 的操作，其中 ECALL 是你需要实现的环境调用处理函数
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0 // 匹配 ebreak 指令，执行 NEMUTRAP(s->pc, R(10)) 的操作，其中 R(10) 是 $a0
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc)); // 匹配无效指令，执行 INV(s->pc) 的操作
   INSTPAT_END(); // 定义一个宏，用于结束匹配指令
