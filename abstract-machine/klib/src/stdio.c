@@ -4,113 +4,82 @@
 #include <stdarg.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
-
-void _putc(char c) {
-    // Assume putchar(c) is your system level function to put a char, replace it with your actual function if not.
-    putch(c);
-}
-
-void print(const char *str) { 
-  while (*str != '\0') {
-    _putc(*str);
-    ++str;
+static void reverse(char *s, int len) {
+  char *end = s + len - 1;
+  char tmp;
+  while (s < end) {
+    tmp = *s;
+    *s = *end;
+    *end = tmp;
   }
 }
-void itoa(int n, char s[]) {
-    int sign;
-    if ((sign = n) < 0)  
-        n = -n;
 
-    int i = 0;
-    do {
-        s[i++] = n % 10 + '0';
-    } while ((n /= 10) > 0);
+/* itoa convert int to string under base. return string length */
+static int itoa(int n, char *s, int base) {
+  assert(base <= 16);
 
-    if (sign < 0)
-        s[i++] = '-';
-    s[i] = '\0';
+  int i = 0, sign = n, bit;
+  if (sign < 0) n = -n;
+  do {
+    bit = n % base;
+    if (bit >= 10) s[i++] = 'a' + bit - 10;
+    else s[i++] = '0' + bit;
+  } while ((n /= base) > 0);
+  if (sign < 0) s[i++] = '-';
+  s[i] = '\0';
+  reverse(s, i);
 
-    /* reverse string */
-    int start = 0;
-    int end = strlen(s) - 1;
-    while (start < end) {
-        char c = s[start];
-        s[start] = s[end];
-        s[end] = c;
-        start++;
-        end--;
-    }
+  return i;
+}
+void outchar(char *out, int *index, char c) {
+  out[*index] = c;
+  ++(*index);
 }
 
-int printf(const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  char buf[1024];
-  vsprintf(buf, fmt, args);
-  print(buf);
-  va_end(args);
-  return 0;  // assuming no error
+void outstring(char *out, int *index, char *s) {
+  while(*s != '\0') {
+    outchar(out, index, *s++);
+  }
+}
+
+void outint(char *out, int *index, int i) {
+  char buffer[32];
+  itoa(i, buffer, 10);
+  outstring(out, index, buffer);
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
-  char* start = out;
+  const char *p;
+  int out_index = 0;
 
-  for (char* f = (char *)fmt; *f != '\0'; f++) {
-    if (*f != '%') {
-      *out = *f;
-      out++;
-    } else {
-      // we need to handle format specifier 
-      f++;
-      switch(*f) {
-        case 'd': {
-          int i = va_arg(ap, int);
-          char str[12];  // buffer for int
-          itoa(i, str);
-          strcpy(out, str);
-          out += strlen(str);
-          break;
-        }
-        case 's': {
-          char* s = va_arg(ap, char*);
-          strcpy(out, s);
-          out += strlen(s);
-          break;
-        }
-        default: {
-          break;
-        }
-      }
+  for (p = fmt; *p != '\0'; p++) {
+    if(*p != '%') {
+      outchar(out, &out_index, *p);
+      continue;
+    }
+    ++p;
+    switch(*p) {
+      case 'd':
+        outint(out, &out_index, va_arg(ap, int));
+        break;
+      case 's':
+        outstring(out, &out_index, va_arg(ap, char*));
+        break;
+      default:
+        outchar(out, &out_index, *p);
+        break;
     }
   }
-
-  *out = '\0';  // append null terminator
-  return out - start;
+  out[out_index] = '\0';
+  return out_index;
 }
 
 int sprintf(char *out, const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  int written = vsprintf(out, fmt, args);
-  va_end(args);
-  return written;
-}
-
-int snprintf(char *out, size_t n, const char *fmt, ...) {
-  // This implementation does not respect the 'n' limit, and it is NOT safe.
-  // In a complete snprintf implementation, it would write at most 'n' characters.
-  va_list args;
-  va_start(args, fmt);
-  int written = vsprintf(out, fmt, args);
-  va_end(args);
-  return written;
-}
-
-int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
-  // This implementation does not respect the 'n' limit, and it is NOT safe.
-  // In a complete vsnprintf implementation, it would write at most 'n' characters.
-  int written = vsprintf(out, fmt, ap);
-  return written;
+  va_list argp;
+  va_start(argp, fmt);
+  int ret = vsprintf(out, fmt, argp);
+  va_end(argp);
+  return ret;
 }
 
 #endif
