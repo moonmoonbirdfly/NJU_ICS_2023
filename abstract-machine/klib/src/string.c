@@ -74,7 +74,23 @@ void *memset(void *s, int c, size_t n) {
 }
 
 void *memmove(void *dst, const void *src, size_t n) {
-  panic("Not implemented");
+      char *cdst = (char *)dst;
+    const char *csrc = (const char *)src;
+
+    // If the source and destination overlap such that moving
+    // from the beginning to the end would overwrite original data in the source...
+    if (csrc < cdst && cdst < csrc + n) {
+        // Then we copy from the end to the beginning.
+        cdst += n;
+        csrc += n;
+        while (n--)
+            *--cdst = *--csrc;
+    } else {
+        // Else we can just copy from beginning to end.
+        while (n--)
+            *cdst++ = *csrc++;
+    }
+    return dst;
 }
 
 void *memcpy(void *out, const void *in, size_t n) {
