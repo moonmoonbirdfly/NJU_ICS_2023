@@ -32,12 +32,6 @@ static int itoa(int n, char *s, int base) {
   int i = 0;
   int start = 0;
   
-  int is_neg = 0;
-  if (base == 10 && n < 0) {
-    is_neg = 1;
-    n = -n;
-  }
-  
   if (n == 0) {
     buf[i++] = '0';
   } else {
@@ -48,7 +42,7 @@ static int itoa(int n, char *s, int base) {
     }
   }
 
-  if (is_neg)
+  if (base == 10 && n < 0)
     buf[i++] = '-';
 
   while (i > 0) {
@@ -67,26 +61,32 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     while (*fmt != '\0') {
         if (*fmt == '%') {
             fmt++;
-            int leading_zero = 0;
-            if (*fmt == '0') {
-                fmt++;
-                leading_zero = *fmt - '0';
-                fmt++;
-            }
             switch (*fmt) {
             case 'd': { // digit
                 int val = va_arg(ap, int);
-                char tmp[32];
-                int length = itoa(val, tmp, 10);
-                while (length < leading_zero) {
-                    *out++ = '0';  // append zero
-                    leading_zero--;
-                }
-                strcpy(out, tmp); 
-                out += strlen(tmp);
+                out += itoa(val, out, 10);
                 break;
             }
-            // handle other cases ...
+            case 's': { // string
+                char *s = va_arg(ap, char *);
+                strcpy(out, s);
+                out += strlen(s);
+                break;
+            }
+            case 'c': { // character
+                char val = (char)va_arg(ap, int);  // char promoted to int in va_arg
+                *(out++)=val; // increment out after the assignment
+                break;
+            }
+            case '%': { // percent
+                *(out++)='%'; // increment out after the assignment
+                break;
+            }
+            default:
+                // Unsupported placeholder, copy as-is
+                *(out++)='%';
+                *(out++)=*fmt;
+                break;
             }
         } else {
             *out = *fmt;
@@ -97,7 +97,6 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     *out = '\0';
     return out - start;
 }
-
 
 int printf(const char *fmt, ...) {
   // create a buffer to store the formatted string.
