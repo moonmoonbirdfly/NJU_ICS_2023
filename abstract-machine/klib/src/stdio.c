@@ -53,9 +53,7 @@ static int itoa(int n, char *s, int base) {
   return start;
 }
 
-int printf(const char *fmt, ...) {
-  panic("Not implemented");
-}
+
 
 static char *copy_string(char *out, const char *str) {
     char *start = out;
@@ -98,7 +96,9 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     
     return out - start;
 }
-
+int printf(const char *fmt, ...) {
+  panic("Not implemented");
+}
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list pArgs;

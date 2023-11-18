@@ -49,7 +49,7 @@ void __am_input_config(AM_INPUT_CONFIG_T *cfg) {
 }
 
 void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
-  int k = AM_KEY_NONE;
+  int k = inl(KBD_ADDR);
 
   SDL_LockMutex(key_queue_lock);
   if (key_f != key_r) {
