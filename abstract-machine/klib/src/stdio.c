@@ -105,6 +105,9 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
                 case 's':
                     out = copy_string(out, va_arg(ap, char*));
                     break;
+                case 'c':
+                    *out++ = (char)va_arg(ap, int);
+                    break;
             }
         }
     }
@@ -113,6 +116,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     
     return out - start;
 }
+
 //static char sprint_buf[1024];
 
 
