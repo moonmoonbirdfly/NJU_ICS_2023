@@ -52,6 +52,32 @@ static int itoa(int n, char *s, int base) {
   
   return start;
 }
+int printf(const char *fmt, ...) {
+  // create a buffer to store the formatted string.
+  // Note: you may want to make this buffer larger or use 
+  // dynamic allocation depending on your use case.
+  char buffer[2048];
+
+  va_list args;
+  va_start(args, fmt);
+
+  // Use the vsprintf function to format the string.
+  vsprintf(buffer, fmt, args);
+
+  va_end(args);
+
+  // Now print the resulting string to the console. 
+  // As this is a demonstrative implementation, it simply uses 
+  // a loop and the given `putch` function to display the characters.
+  char *ch = buffer;
+  while (*ch != '\0') {
+    putch(*ch++);
+  }
+
+  // Return the number of characters printed
+  return ch - buffer;
+}
+
 
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
