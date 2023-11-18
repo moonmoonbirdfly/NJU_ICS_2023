@@ -55,28 +55,47 @@ static int itoa(int n, char *s, int base) {
 
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
-  char *start = out;
-  
-  for (; *fmt != '\0'; ++fmt) {
-    if (*fmt != '%') {
-      *out = *fmt;
-      ++out;
-    } else {
-      switch (*(++fmt)) {
-      case '%': *out = *fmt; ++out; break;
-      case 'd': out += itoa(va_arg(ap, int), out, 10); break;
-      case 's':
-        char *s = va_arg(ap, char*);
-        strcpy(out, s);
-        out += strlen(out);
-        break;
-      }
+    char *start = out;
+    while (*fmt != '\0') {
+        if (*fmt == '%') {
+            fmt++;
+            switch (*fmt) {
+            case 'd': { // digit
+                int val = va_arg(ap, int);
+                out += itoa(val, out, 10);
+                break;
+            }
+            case 's': { // string
+                char *s = va_arg(ap, char *);
+                strcpy(out, s);
+                out += strlen(s);
+                break;
+            }
+            case 'c': { // character
+                char val = (char)va_arg(ap, int);  // char promoted to int in va_arg
+                *(out++)=val; // increment out after the assignment
+                break;
+            }
+            case '%': { // percent
+                *(out++)='%'; // increment out after the assignment
+                break;
+            }
+            default:
+                // Unsupported placeholder, copy as-is
+                *(out++)='%';
+                *(out++)=*fmt;
+                break;
+            }
+        } else {
+            *out = *fmt;
+            out++;
+        }
+        fmt++;
     }
-  }
-  
-  *out = '\0';
-  return out - start;
+    *out = '\0';
+    return out - start;
 }
+
 
 //static char sprint_buf[1024];
 
