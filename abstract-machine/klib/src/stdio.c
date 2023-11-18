@@ -71,23 +71,20 @@ static char *convert_to_dec_string(char *out, int num) {
     return copy_string(out, buffer);
 }
 
-//static char sprint_buf[1024];
+static char sprint_buf[1024];
 int printf(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    char buffer[1024]; // Buffer size should be chosen based on your specific requirements.
-    vsprintf(buffer, fmt, args);
-
-    char *p = buffer;
-    while (*p != '\0') {
-        putch(*p);
-        p++;
-    }
-
+    sprintf(sprint_buf, fmt, args);
     va_end(args);
 
-    return p - buffer; // returns number of characters printed
+    char *ptr = sprint_buf;
+    while (*ptr != '\0') {
+        putch(*ptr++);
+    }
+    return ptr - sprint_buf; // return the number of characters printed
 }
+
 
 
 
