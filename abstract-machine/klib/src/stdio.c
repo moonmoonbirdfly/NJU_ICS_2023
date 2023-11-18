@@ -57,29 +57,48 @@ int printf(const char *fmt, ...) {
   panic("Not implemented");
 }
 
-int vsprintf(char *out, const char *fmt, va_list ap) {
-  char *start = out;
-  
-  for (; *fmt != '\0'; ++fmt) {
-    if (*fmt != '%') {
-      *out = *fmt;
-      ++out;
-    } else {
-      switch (*(++fmt)) {
-      case '%': *out = *fmt; ++out; break;
-      case 'd': out += itoa(va_arg(ap, int), out, 10); break;
-      case 's':
-        char *s = va_arg(ap, char*);
-        strcpy(out, s);
-        out += strlen(out);
-        break;
-      }
-    }
-  }
-  *out = '\0';
+static char *copy_string(char *out, const char *str) {
+    char *start = out;
 
-  return out - start;
+    while (*str) {
+        *out++ = *str++;
+    }
+
+    return start;
 }
+
+static char *convert_to_dec_string(char *out, int num) {
+    char buffer[32];
+    itoa(num, buffer, 10);
+    return copy_string(out, buffer);
+}
+
+int vsprintf(char *out, const char *fmt, va_list ap) {
+    char *start = out;
+
+    for (; *fmt != '\0'; ++fmt) {
+        if (*fmt != '%') {
+            *out++ = *fmt;
+        } else {
+            switch (*(++fmt)) {
+                case '%':
+                    *out++ = *fmt;
+                    break;
+                case 'd':
+                    out = convert_to_dec_string(out, va_arg(ap, int));
+                    break;
+                case 's':
+                    out = copy_string(out, va_arg(ap, char*));
+                    break;
+            }
+        }
+    }
+    
+    *out = '\0';
+    
+    return out - start;
+}
+
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list pArgs;
