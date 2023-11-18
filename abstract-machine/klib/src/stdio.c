@@ -73,10 +73,7 @@ static char *convert_to_dec_string(char *out, int num) {
 
 static char sprint_buf[1024];
 int printf(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    sprintf(sprint_buf, fmt, args);
-    va_end(args);
+
 
     char *ptr = sprint_buf;
     while (*ptr != '\0') {
