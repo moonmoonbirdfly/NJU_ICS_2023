@@ -25,68 +25,68 @@ static char numToChar(int num) {
 }
 
 static int itoa(int n, char *s, int base) {
-    assert(base <= 16);
+  assert(base <= 16);
   
-    char buf[32];
-    int bit;
-    int i = 0;
-    int start = 0;
+  char buf[32];
+  int bit;
+  int i = 0;
+  int start = 0;
   
-    int is_negative = (base == 10 && n < 0);
-    if (is_negative)
-        n = -n;
-  
-    if (n == 0) {
-        buf[i++] = '0';
-    } else {
-        while (n != 0) {
-            bit = n % base;
-            buf[i++] = numToChar(bit);
-            n /= base;
-        }
+  if (n == 0) {
+    buf[i++] = '0';
+  } else {
+    while (n != 0) {
+      bit = n % base;
+      buf[i++] = numToChar(bit);
+      n /= base;
     }
+  }
+
+  if (base == 10 && n < 0)
+    buf[i++] = '-';
+
+  while (i > 0) {
+    s[start++] = buf[--i];
+  }
+  s[start] = '\0';
   
-    if (is_negative)
-        buf[i++] = '-';
-  
-    while (i > 0) {
-        s[start++] = buf[--i];
-    }
-    s[start] = '\0';
-  
-    return start;
+  return start;
 }
+
+
+
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
     char *start = out;
-    bool hitZeroFlag = false;
-    int numOfZero = 0;
     while (*fmt != '\0') {
         if (*fmt == '%') {
             fmt++;
-            if(*fmt == '0'){
-                hitZeroFlag = true;
-                fmt++;
-                numOfZero = *fmt - '0';
-                fmt++;
-            }
             switch (*fmt) {
             case 'd': { // digit
                 int val = va_arg(ap, int);
-                char numBuffer[32];
-                int len = itoa(val, numBuffer, 10);
-                if(hitZeroFlag){
-                    int paddingZero = numOfZero - len;
-                    for(int i = 0; i < paddingZero; ++i)
-                        *(out++) = '0';
-                }
-                strcpy(out, numBuffer);
-                out += len;
-                hitZeroFlag = false;
+                out += itoa(val, out, 10);
                 break;
             }
-            // the same for the rest of case
-            //...
+            case 's': { // string
+                char *s = va_arg(ap, char *);
+                strcpy(out, s);
+                out += strlen(s);
+                break;
+            }
+            case 'c': { // character
+                char val = (char)va_arg(ap, int);  // char promoted to int in va_arg
+                *(out++)=val; // increment out after the assignment
+                break;
+            }
+            case '%': { // percent
+                *(out++)='%'; // increment out after the assignment
+                break;
+            }
+            default:
+                // Unsupported placeholder, copy as-is
+                *(out++)='%';
+                *(out++)=*fmt;
+                break;
             }
         } else {
             *out = *fmt;
@@ -97,7 +97,6 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     *out = '\0';
     return out - start;
 }
-
 
 int printf(const char *fmt, ...) {
   // create a buffer to store the formatted string.
