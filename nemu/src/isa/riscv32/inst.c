@@ -47,7 +47,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   *rd     = BITS(i, 11, 7); // 获取目标寄存器的编号
   switch (type) { // 根据指令的格式，获取不同的操作数
     case TYPE_I: src1R();          immI(); break; // I 型指令，获取源寄存器 1 和立即数
-    case TYPE_U:                   immU(); break; // U 型指令，获取立即数
+    case TYPE_U:                   immU(); break; // *imm = SEXT(BITS(i, 31, 12), 20) U 型指令，获取立即数
     case TYPE_S: src1R(); src2R(); immS(); break; // S 型指令，获取源寄存器 1、源寄存器 2 和立即数
     case TYPE_R: src1R(); src2R(); 	   break; // R 型指令，获取源寄存器 1 和源寄存器 2
     case TYPE_B: src1R(); src2R(); immB(); break; // B 型指令，获取源寄存器 1、源寄存器 2 和立即数
