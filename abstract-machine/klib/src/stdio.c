@@ -5,14 +5,16 @@
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 static void reverse(char *s, int len) {
-char *end = s + len - 1;
-char tmp;
-while (s < end) {
-tmp = *s;
-*s = *end;
-*end = tmp;
+  char* end = s + len - 1;
+  while (s < end) {
+    *s   = *s ^ *end;
+    *end = *s ^ *end;
+    *s   = *s ^ *end;
+    s++;
+    end--;
+  }
 }
-}
+
 
 /* itoa convert int to string under base. return string length */
 static int itoa(int n, char *s, int base) {
@@ -69,7 +71,7 @@ int sprintf(char *out, const char *fmt, ...) {
 
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
   size_t len = 0;
-  //char *start = out;
+  
 
   for (; *fmt != '\0'; ++fmt) {
     if (len >= n) {
