@@ -71,19 +71,24 @@ static char *convert_to_dec_string(char *out, int num) {
     return copy_string(out, buffer);
 }
 
-static char sprint_buf[1024];
-int printf(const char *fmt, ...)//可以有一个或多个固定参数
-{
-  va_list args; //用于存放参数列表的数据结构
-  int n;
-  /*根据最后一个fmt来初始化参数列表，至于为什么是最后一个参数，是与va_start有关，感兴趣的朋友可以先去了解一下变参函数和里面用到的相关宏的作用。*/
-  va_start(args, fmt);
-  n = vsprintf(sprint_buf, fmt, args);
-  va_end(args);//执行清理参数列表的工作
-  // if (console_ops.write)
-  // 		console_ops.write(sprint_buf, n);
-  return n;
+//static char sprint_buf[1024];
+int printf(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char buffer[1024]; // Buffer size should be chosen based on your specific requirements.
+    vsprintf(buffer, fmt, args);
+
+    char *p = buffer;
+    while (*p != '\0') {
+        putch(*p);
+        p++;
+    }
+
+    va_end(args);
+
+    return p - buffer; // returns number of characters printed
 }
+
 
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
@@ -111,7 +116,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     
     return out - start;
 }
-static char sprint_buf[1024];
+//static char sprint_buf[1024];
 
 
 int sprintf(char *out, const char *fmt, ...) {
