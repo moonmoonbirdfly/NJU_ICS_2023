@@ -54,65 +54,30 @@ static int itoa(int n, char *s, int base) {
 }
 
 
-
-static char *copy_string(char *out, const char *str) {
-    char *start = out;
-
-    while (*str) {
-        *out++ = *str++;
-    }
-
-    return start;
-}
-
-static char *convert_to_dec_string(char *out, int num) {
-    char buffer[32];
-    itoa(num, buffer, 10);
-    return copy_string(out, buffer);
-}
-
-static char sprint_buf[1024];
-int printf(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    sprintf(sprint_buf, fmt, args);
-    va_end(args);
-
-    char *ptr = sprint_buf;
-    while (*ptr != '\0') {
-        putch(*ptr++);
-    }
-    return ptr - sprint_buf; // return the number of characters printed
-}
-
-
-
-
 int vsprintf(char *out, const char *fmt, va_list ap) {
-    char *start = out;
-
-    for (; *fmt != '\0'; ++fmt) {
-        if (*fmt != '%') {
-            *out++ = *fmt;
-        } else {
-            switch (*(++fmt)) {
-                case '%':
-                    *out++ = *fmt;
-                    break;
-                case 'd':
-                    out = convert_to_dec_string(out, va_arg(ap, int));
-                    break;
-                case 's':
-                    out = copy_string(out, va_arg(ap, char*));
-                    break;
-            }
-        }
+  char *start = out;
+  
+  for (; *fmt != '\0'; ++fmt) {
+    if (*fmt != '%') {
+      *out = *fmt;
+      ++out;
+    } else {
+      switch (*(++fmt)) {
+      case '%': *out = *fmt; ++out; break;
+      case 'd': out += itoa(va_arg(ap, int), out, 10); break;
+      case 's':
+        char *s = va_arg(ap, char*);
+        strcpy(out, s);
+        out += strlen(out);
+        break;
+      }
     }
-    
-    *out = '\0';
-    
-    return out - start;
+  }
+  
+  *out = '\0';
+  return out - start;
 }
+
 //static char sprint_buf[1024];
 
 
