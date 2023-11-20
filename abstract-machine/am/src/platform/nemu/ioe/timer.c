@@ -13,9 +13,10 @@ void __am_timer_init() {
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
   // 通过读取硬件 timer 的当前值，获取系统已经运行的时间
   // inl 函数从 port 指定的 I/O 地址读取一个 dword（32位值）
+  uptime->us <<= 32;
   uptime->us = inl(RTC_ADDR + 4);
   // 由于 timer 的值可能会超过 32 位，所以这里需要读两次，然后将这两次的值合并成一个 64 位的整数
-  uptime->us <<= 32;
+  
   uptime->us += inl(RTC_ADDR);
 }
 
