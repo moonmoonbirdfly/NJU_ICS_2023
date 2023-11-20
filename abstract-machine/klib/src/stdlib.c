@@ -29,17 +29,36 @@ int atoi(const char* nptr) {
   return x;
 }
 
+
+
+// Remaining functions... 
+
+void *start_of_heap = NULL; // Store the start of heap.
+
 void *malloc(size_t size) {
-  // On native, malloc() will be called during initializaion of C runtime.
-  // Therefore do not call panic() here, else it will yield a dead recursion:
-  //   panic() -> putchar() -> (glibc) -> malloc() -> panic()
 #if !(defined(__ISA_NATIVE__) && defined(__NATIVE_USE_KLIB__))
+  if (start_of_heap == NULL) {
+    start_of_heap = (void *)heap.start; // Initialize if not yet initiated.
+  }
+  
+  if ((start_of_heap + size) > (void*)heap.end) {
+    panic("Heap Overflow!");
+    return NULL; // Not enough space left on the heap.
+  }
+
+  void *old_heap = start_of_heap;
+
+  start_of_heap += size;
+  
+  return old_heap;
+#else
   panic("Not implemented");
-#endif
   return NULL;
+#endif
 }
 
 void free(void *ptr) {
+  // Do nothing. Recall that our malloc also doesn't really free any memory.
 }
 
 #endif
