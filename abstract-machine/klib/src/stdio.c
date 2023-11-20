@@ -61,10 +61,32 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     while (*fmt != '\0') {
         if (*fmt == '%') {
             fmt++;
+
+            // Check for zero padding and width specifier
+            int zeroPad = 0;
+            if (*fmt == '0') {
+                fmt++;
+                zeroPad = 1;
+            }
+
+            int width = 0;
+            while(*fmt >= '0' && *fmt <= '9') {
+                width = width * 10 + *fmt - '0';
+                fmt++;
+            }
+
             switch (*fmt) {
             case 'd': { // digit
                 int val = va_arg(ap, int);
-                out += itoa(val, out, 10);
+                int len = itoa(val, out, 10);
+                // Zero padding
+                if (zeroPad && width > len) {
+                    memmove(out + width - len, out, len);
+                    memset(out, '0', width - len);
+                    out += width;
+                } else {
+                    out += len;
+                }
                 break;
             }
             case 's': { // string
@@ -97,6 +119,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     *out = '\0';
     return out - start;
 }
+
 
 int printf(const char *fmt, ...) {
   // create a buffer to store the formatted string.
