@@ -25,12 +25,8 @@ void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
   long seconds = now.tv_sec - boot_time.tv_sec;
   long useconds = now.tv_usec - boot_time.tv_usec;
   uptime->us = seconds * 1000000 + (useconds + 500);
-  //uint32_t low = inl(RTC_ADDR);
-  //uint32_t high = inl(RTC_ADDR+4);
-  //uptime->us = (uint64_t)low + (((uint64_t)high) << 32);
 }
 
 void __am_timer_init() {
-
   gettimeofday(&boot_time, NULL);
 }
