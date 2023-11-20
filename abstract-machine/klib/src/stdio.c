@@ -123,7 +123,7 @@ int printf(const char *fmt, ...) {
   // Return the number of characters printed
   return ch - buffer;
 }
-//static char sprint_buf[1024];
+
 
 
 int sprintf(char *out, const char *fmt, ...) {
