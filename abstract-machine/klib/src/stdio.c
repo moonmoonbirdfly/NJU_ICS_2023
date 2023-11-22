@@ -125,7 +125,7 @@ int printf(const char *fmt, ...) {
  // create a buffer to store the formatted string.
   // Note: you may want to make this buffer larger or use 
   // dynamic allocation depending on your use case.
-  char buffer[2048];
+ /* char buffer[2048];
 
   va_list args;
   va_start(args, fmt);
@@ -145,6 +145,9 @@ int printf(const char *fmt, ...) {
 
   // Return the number of characters printed
   return ch - buffer;
+  
+  */
+  return 0;
 }
 
 
