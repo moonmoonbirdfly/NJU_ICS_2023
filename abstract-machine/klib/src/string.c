@@ -22,7 +22,7 @@ char *strcpy(char *dst, const char *src) {
   *dst = '\0'; // add the null terminator
   return origin_dst;
 }
-
+/*
 char *strncpy(char *dst, const char *src, size_t n) {
   char *origin_dst = dst;
   size_t i;
@@ -91,7 +91,7 @@ void *memmove(void *dst, const void *src, size_t n) {
             *cdst++ = *csrc++;
     }
     return dst;
-}
+}*/
 
 void *memcpy(void *out, const void *in, size_t n) {
   char *dst = out;
