@@ -65,14 +65,14 @@ int strncmp(const char *s1, const char *s2, size_t n) {
   }
   return 0;
 }
-/*
+
 void *memset(void *s, int c, size_t n) {
   unsigned char *p = (unsigned char *)s;
   while(n--)
     *p++ = (unsigned char)c;
   return s;
 }
-
+/*
 void *memmove(void *dst, const void *src, size_t n) {
       char *cdst = (char *)dst;
     const char *csrc = (const char *)src;
