@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
-
+/*
 size_t strlen(const char *s) {
     const char *ptr = s;
     while(*ptr != '\0') {
@@ -11,7 +11,7 @@ size_t strlen(const char *s) {
     }
   return ptr - s;
 }
-
+*/
 char *strcpy(char *dst, const char *src) {
     char *origin_dst = dst;
   while(*src != '\0') {
@@ -22,7 +22,7 @@ char *strcpy(char *dst, const char *src) {
   *dst = '\0'; // add the null terminator
   return origin_dst;
 }
-
+/*
 char *strncpy(char *dst, const char *src, size_t n) {
   char *origin_dst = dst;
   size_t i;
@@ -39,7 +39,7 @@ char *strncpy(char *dst, const char *src, size_t n) {
 
   return origin_dst;
 }
-
+*/
 char *strcat(char *dst, const char *src) {
   char *dest = dst;
   while (*dst) {
@@ -55,7 +55,7 @@ int strcmp(const char *s1, const char *s2) {
   }
   return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
-
+/*
 int strncmp(const char *s1, const char *s2, size_t n) {
   for (; n > 0; s1++, s2++, --n){
     if (*s1 != *s2)
@@ -65,7 +65,7 @@ int strncmp(const char *s1, const char *s2, size_t n) {
   }
   return 0;
 }
-
+*/
 void *memset(void *s, int c, size_t n) {
   unsigned char *p = (unsigned char *)s;
   while(n--)
