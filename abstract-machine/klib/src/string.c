@@ -92,7 +92,7 @@ void *memmove(void *dst, const void *src, size_t n) {
     }
     return dst;
 }
-
+/*
 void *memcpy(void *out, const void *in, size_t n) {
   char *dst = out;
   const char *src = in;
@@ -100,8 +100,8 @@ void *memcpy(void *out, const void *in, size_t n) {
     *dst++ = *src++;
   }
   return out;
-}
-/*
+}*/
+
 int memcmp(const void *s1, const void *s2, size_t n) {
    const unsigned char *p1 = s1, *p2 = s2;
   while(n--) {
@@ -113,5 +113,5 @@ int memcmp(const void *s1, const void *s2, size_t n) {
   }
   return 0;
 }
-*/
+
 #endif
