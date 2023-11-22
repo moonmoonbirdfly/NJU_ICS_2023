@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
-/*
+
 size_t strlen(const char *s) {
     const char *ptr = s;
     while(*ptr != '\0') {
@@ -11,7 +11,7 @@ size_t strlen(const char *s) {
     }
   return ptr - s;
 }
-*/
+
 char *strcpy(char *dst, const char *src) {
     char *origin_dst = dst;
   while(*src != '\0') {
