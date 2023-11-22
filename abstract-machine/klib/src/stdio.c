@@ -125,8 +125,8 @@ int printf(const char *fmt, ...) {
  // create a buffer to store the formatted string.
   // Note: you may want to make this buffer larger or use 
   // dynamic allocation depending on your use case.
- panic("Not implemented");   
- /* char buffer[2048];
+ //panic("Not implemented");   
+  char buffer[2048];
 
   va_list args;
   va_start(args, fmt);
@@ -145,17 +145,18 @@ int printf(const char *fmt, ...) {
   }
 
   // Return the number of characters printed
-  return ch - buffer;*/
+  return ch - buffer;
 }
 
 
 
 int sprintf(char *out, const char *fmt, ...) {
-  va_list pArgs;
+panic("Not implemented");   
+  /*va_list pArgs;
   va_start(pArgs, fmt);
   int ret = vsprintf(out, fmt, pArgs);
   va_end(pArgs);
-  return ret;
+  return ret;*/
 }
 
 
