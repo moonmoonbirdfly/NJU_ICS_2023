@@ -72,7 +72,7 @@ void *memset(void *s, int c, size_t n) {
     *p++ = (unsigned char)c;
   return s;
 }
-/*
+
 void *memmove(void *dst, const void *src, size_t n) {
       char *cdst = (char *)dst;
     const char *csrc = (const char *)src;
@@ -100,7 +100,7 @@ void *memcpy(void *out, const void *in, size_t n) {
     *dst++ = *src++;
   }
   return out;
-}*/
+}
 
 int memcmp(const void *s1, const void *s2, size_t n) {
    const unsigned char *p1 = s1, *p2 = s2;
