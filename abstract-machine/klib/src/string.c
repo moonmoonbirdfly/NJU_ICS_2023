@@ -22,6 +22,7 @@ char *strcpy(char *dst, const char *src) {
   *dst = '\0'; // add the null terminator
   return origin_dst;
 }
+
 /*
 char *strncpy(char *dst, const char *src, size_t n) {
   char *origin_dst = dst;
