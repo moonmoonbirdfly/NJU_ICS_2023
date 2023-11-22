@@ -149,14 +149,13 @@ int printf(const char *fmt, ...) {
 }
 
 
-
 int sprintf(char *out, const char *fmt, ...) {
-panic("Not implemented");   
-  /*va_list pArgs;
+//panic("Not implemented");   
+  va_list pArgs;
   va_start(pArgs, fmt);
   int ret = vsprintf(out, fmt, pArgs);
   va_end(pArgs);
-  return ret;*/
+  return ret;
 }
 
 
