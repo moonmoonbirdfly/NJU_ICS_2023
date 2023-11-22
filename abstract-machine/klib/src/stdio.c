@@ -119,10 +119,10 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     *out = '\0';
     return out - start;
 }
-/*
+
 
 int printf(const char *fmt, ...) {
-  // create a buffer to store the formatted string.
+ // create a buffer to store the formatted string.
   // Note: you may want to make this buffer larger or use 
   // dynamic allocation depending on your use case.
   char buffer[2048];
@@ -147,7 +147,7 @@ int printf(const char *fmt, ...) {
   return ch - buffer;
 }
 
-*/
+
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list pArgs;
