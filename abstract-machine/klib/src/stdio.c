@@ -148,7 +148,7 @@ int printf(const char *fmt, ...) {
 }
 
 
-
+/*
 int sprintf(char *out, const char *fmt, ...) {
   va_list pArgs;
   va_start(pArgs, fmt);
@@ -216,6 +216,6 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
   va_end(pArgs);
   return ret;
 }
-
+*/
 
 #endif
