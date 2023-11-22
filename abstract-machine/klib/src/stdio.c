@@ -119,7 +119,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     *out = '\0';
     return out - start;
 }
-
+/*
 
 int printf(const char *fmt, ...) {
   // create a buffer to store the formatted string.
@@ -147,7 +147,7 @@ int printf(const char *fmt, ...) {
   return ch - buffer;
 }
 
-
+*/
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list pArgs;
@@ -157,7 +157,7 @@ int sprintf(char *out, const char *fmt, ...) {
   return ret;
 }
 
-/*
+
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
   size_t len = 0;
   
@@ -217,6 +217,5 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
   va_end(pArgs);
   return ret;
 }
-*/
 
 #endif
