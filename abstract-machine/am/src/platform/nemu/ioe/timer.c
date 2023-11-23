@@ -11,7 +11,7 @@ void __am_timer_init() {
    outl(RTC_HI_ADDR, 0);
 }
 
-void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
+void __am_timer_uptime(uint64_t *uptime) {
     uint32_t lo = inl(RTC_LO_ADDR);
     uint32_t hi = inl(RTC_HI_ADDR);
     // 注意这里是把高位数值左移32位，与低位做或操作，得到64位的时间值
