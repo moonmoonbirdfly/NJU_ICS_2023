@@ -12,11 +12,11 @@ void __am_timer_init() {
 }
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-      //uptime->us = 0;
-     uptime->us=inl(RTC_ADDR+4);
-      uptime->us<<=32;
-      uptime->us+=inl(RTC_ADDR);
-    } 
+    uint32_t lo = inl(RTC_LO_ADDR);
+    uint32_t hi = inl(RTC_HI_ADDR);
+    // 注意这里是把高位数值左移32位，与低位做或操作，得到64位的时间值
+    *uptime = ((uint64_t)hi << 32) | lo;
+}
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {
   rtc->second = 0;
