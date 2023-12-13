@@ -23,7 +23,7 @@
 // It will be expanded as "x86" or "mips32" ...
 typedef concat(__GUEST_ISA__, _CPU_state) CPU_state; // 根据 __GUEST_ISA__ 宏的定义，给 CPU 状态结构体类型取一个别名，例如 x86_CPU_state 或 mips32_CPU_state
 typedef concat(__GUEST_ISA__, _ISADecodeInfo) ISADecodeInfo; // 根据 __GUEST_ISA__ 宏的定义，给 ISA 解码信息结构体类型取一个别名，例如 x86_ISADecodeInfo 或 mips32_ISADecodeInfo
-
+typedef concat(__GUEST_ISA__, _CSRs) CSRs;
 // monitor
 extern unsigned char isa_logo[]; // 声明一个外部的无符号字符数组，用于存放 ISA 的 logo
 void init_isa(); // 声明一个函数，用于初始化 ISA
