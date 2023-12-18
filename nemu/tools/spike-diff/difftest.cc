@@ -82,6 +82,29 @@ void sim_t::diff_set_regs(void* diff_context) {
   state->mtvec = ctx->mtvec;
 }
 
+#define CHECKDIFF(p) if (ref_r->p != cpu.p) { \
+  printf("difftest fail at " #p ", expect %#lx got %#lx\n", ref_r->p, cpu.p); \
+  return false; \
+}
+#define CHECKDIFF_FMT(p, fmt, ...) if (ref_r->p != cpu.p) { \
+  printf("difftest fail at " fmt ", expect %#lx got %#lx\n", ## __VA_ARGS__, ref_r->p, cpu.p); \
+  return false; \
+}
+
+
+bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
+  int reg_num = ARRLEN(cpu.gpr);
+  for (int i = 0; i < reg_num; i++) {
+    CHECKDIFF_FMT(gpr[i], "gpr[%d]", i);
+  }
+  CHECKDIFF(pc);
+  CHECKDIFF(mstatus);
+	CHECKDIFF(mcause);
+  CHECKDIFF(mepc);
+  CHECKDIFF(mtvec);
+  return true;
+}
+
 
 void sim_t::diff_memcpy(reg_t dest, void* src, size_t n) {
   mmu_t* mmu = p->get_mmu();
