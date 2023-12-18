@@ -16,6 +16,9 @@
 #include <isa.h>
 
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
+ 	if(NO==0){
+	  epc+=4;
+	}
   cpu.csr.mcause = NO;
   cpu.csr.mepc = epc;
 
