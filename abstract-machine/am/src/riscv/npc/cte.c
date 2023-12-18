@@ -43,7 +43,7 @@ void yield() {
 }
 
 bool ienabled() {
-  return false;
+  return true;
 }
 
 void iset(bool enable) {
