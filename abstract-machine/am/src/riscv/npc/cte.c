@@ -43,8 +43,19 @@ void yield() {
 }
 
 bool ienabled() {
-  return true;
+  uintptr_t mstatus;
+  asm volatile("csrr %0, mstatus" : "=r"(mstatus));
+  return (mstatus & MSTATUS_MIE) != 0;
 }
 
 void iset(bool enable) {
+  uintptr_t mstatus;
+  if (enable) {
+    // 使能中断
+    asm volatile("csrrs %0, mstatus, %1" : "=r"(mstatus) : "r"(0x1800));
+  } else {
+    // 禁用中断
+    asm volatile("csrrc %0, mstatus, %1" : "=r"(mstatus) : "r"(0x1800));
+  }
 }
+
