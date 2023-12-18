@@ -28,7 +28,7 @@ typedef struct {
 typedef struct {
   word_t gpr[MUXDEF(CONFIG_RVE, 16, 32)]; // 通用寄存器数组，其大小根据 CONFIG_RVE 的值来确定（如果 CONFIG_RVE 为真，大小为16；否则为32）
   vaddr_t pc; // 程序计数器
-  MUXDEF(CONFIG_RV64, riscv64_CSRs, riscv32_CSRs) csr;
+  riscv32_CSRs csr;
 } MUXDEF(CONFIG_RV64, riscv64_CPU_state, riscv32_CPU_state);
 
 // 定义一个结构体，用于存储指令解码相关的信息
