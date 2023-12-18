@@ -1,7 +1,7 @@
 #include <am.h>
 #include <riscv/riscv.h>
 #include <klib.h>
-
+#define MSTATUS_MIE  0x8
 static Context* (*user_handler)(Event, Context*) = NULL;
 
 Context* __am_irq_handle(Context *c) {
@@ -51,11 +51,11 @@ bool ienabled() {
 void iset(bool enable) {
   uintptr_t mstatus;
   if (enable) {
-    // 使能中断
-    asm volatile("csrrs %0, mstatus, %1" : "=r"(mstatus) : "r"(0x1800));
+    // Set the MIE bit to enable interrupts
+    asm volatile("csrrs %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MIE));
   } else {
-    // 禁用中断
-    asm volatile("csrrc %0, mstatus, %1" : "=r"(mstatus) : "r"(0x1800));
+    // Clear the MIE bit to disable interrupts
+    asm volatile("csrrc %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MIE));
   }
 }
 
