@@ -48,17 +48,17 @@ void yield() {
 bool ienabled() {
   uintptr_t mstatus;
   asm volatile("csrr %0, mstatus" : "=r"(mstatus));
-  return (mstatus & MSTATUS_MIE) != 0;
+  return (mstatus & MSTATUS_MXR) != 0;
 }
 
 void iset(bool enable) {
   uintptr_t mstatus;
   if (enable) {
     // Set the MIE bit to enable interrupts
-    asm volatile("csrrs %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MIE));
+    asm volatile("csrrs %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MXR));
   } else {
     // Clear the MIE bit to disable interrupts
-    asm volatile("csrrc %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MIE));
+    asm volatile("csrrc %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MXR));
   }
 }
 
