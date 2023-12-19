@@ -8,8 +8,7 @@ Context* __am_irq_handle(Context *c) {
   if (user_handler) {
     Event ev = {0};
     switch (c->mcause) {
-      case 0:
-        ev.event=EVENT_YIELD;break;
+     
       default: ev.event = EVENT_ERROR; break;
     }
     //user_handler是cte_init中注册的回调函数
