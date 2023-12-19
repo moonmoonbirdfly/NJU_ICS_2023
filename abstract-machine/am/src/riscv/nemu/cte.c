@@ -4,19 +4,20 @@
 
 static Context* (*user_handler)(Event, Context*) = NULL;
 
+
 Context* __am_irq_handle(Context *c) {
   if (user_handler) {
     Event ev = {0};
+    printf("__am_irq_handle中c->mcause为%d\n",c->mcause);
     switch (c->mcause) {
-      case 0:
-        ev.event=EVENT_YIELD;break;
+      case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8:case 9:case 10:case 11:case 12:case 13:case 14:case 15:case 16:case 17:case 18:case 19:ev.event=EVENT_SYSCALL;break;
       default: ev.event = EVENT_ERROR; break;
     }
-
+    //user_handler是cte_init中注册的回调函数
     c = user_handler(ev, c);
     assert(c != NULL);
   }
-
+  
   return c;
 }
 
@@ -45,8 +46,19 @@ void yield() {
 }
 
 bool ienabled() {
-  return false;
+  uintptr_t mstatus;
+  asm volatile("csrr %0, mstatus" : "=r"(mstatus));
+  return (mstatus & MSTATUS_MIE) != 0;
 }
 
 void iset(bool enable) {
+  uintptr_t mstatus;
+  if (enable) {
+    // Set the MIE bit to enable interrupts
+    asm volatile("csrrs %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MIE));
+  } else {
+    // Clear the MIE bit to disable interrupts
+    asm volatile("csrrc %0, mstatus, %1" : "=r"(mstatus) : "r"(MSTATUS_MIE));
+  }
 }
+
