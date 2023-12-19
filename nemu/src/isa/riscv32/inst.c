@@ -51,7 +51,7 @@ static vaddr_t *csr_register(word_t imm) {
 }
 #define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); }
 #define CSR(i) *csr_register(i)
-#define MRET {cpu.pc=cpu.csr.mepc;}
+
 
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type) {
   // 定义一个静态函数，用于解码指令的操作数
@@ -154,7 +154,7 @@ INSTPAT("0000000 ????? ????? 100 ????? 01100 11", xor    , R, R(rd) = src1 ^ src
 INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, R(rd) = CSR(imm); CSR(imm) = src1);
 INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = CSR(imm); CSR(imm) |= src1);
 INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc, I, R(rd) = CSR(imm); CSR(imm) &= ~src1);
-INSTPAT("0011000 00010 00000 000 00000 11100 11", mret,  I, MRET);
+INSTPAT("0011000 00010 00000 000 00000 11100 11", mret,  I, cpu.pc=CSR(0x341););
 
 INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, ECALL(s->dnpc));
 
