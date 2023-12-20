@@ -73,8 +73,15 @@ int _write(int fd, void *buf, size_t count) {
 
 }
 
+extern char end;
 void *_sbrk(intptr_t increment) {
-  return (void *)-1;
+  static char *myend = &end;
+  if (_syscall_(SYS_brk, increment, 0, 0) == 0) {
+    void *ret = myend;
+    myend += increment;
+    return (void*)ret;
+  }
+  return (void*)-1;
 }
 
 int _read(int fd, void *buf, size_t count) {
