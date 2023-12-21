@@ -1,8 +1,10 @@
 #include <unistd.h>
+#include <stdio.h>
 #include <sys/stat.h>
-#include <sys/time.h>
+#include <setjmp.h>
 #include <assert.h>
-#include <time.h>
+#include <sys/time.h>
+#include <errno.h>
 #include "syscall.h"
 
 // helper macros
