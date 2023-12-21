@@ -36,3 +36,90 @@ void naive_uload(PCB *pcb, const char *filename) {
   ((void(*)())entry) ();
 }
 
+void context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[]) {
+  Log("filename: %s", filename);
+  uintptr_t entry = loader(pcb, filename);
+
+  Area stack;
+  stack.start = pcb->stack;
+  stack.end = pcb->stack + STACK_SIZE;
+
+  Log("stack.start: %p, stack.end: %p", stack.start, stack.end);
+  Log("entry: %p", entry);
+
+  // prepare entry point
+  pcb->cp = ucontext(NULL, stack, (void(*)()) entry);
+
+  // prepare argv and envp
+  void *ustack_end = new_page(8);
+  int space_count = 0; // unit: the size of pointer
+  // TODO: unspecified part
+
+  int argc = 0;
+  if (argv) while (argv[argc]) {
+      // Log("argv[%d]: %s", argc, argv[argc]); 
+      argc++;
+  }
+  space_count += sizeof(uintptr_t); // for argc
+  space_count += sizeof(uintptr_t) * (argc + 1); // for argv
+  if (argv) for (int i = 0; i < argc; ++i) space_count += (strlen(argv[i]) + 1);
+
+  int envpc = 0;
+  if (envp) while (envp[envpc]) envpc++;
+  space_count += sizeof(uintptr_t) * (envpc + 1); // for envp
+  if (envp) for (int i = 0; i < envpc; ++i) space_count += (strlen(envp[i]) + 1);
+
+  Log("argc: %d, envpc: %d, space_count: %d", argc, envpc, space_count);
+
+  space_count += sizeof(uintptr_t); // for ROUNDUP
+  Log("base before ROUNDUP: %p", ustack_end - space_count);
+  uintptr_t *base = (uintptr_t *)ROUNDUP(ustack_end - space_count, sizeof(uintptr_t));
+  uintptr_t *base_mem = base;
+  Log("base after ROUNDUP: %p", base);
+
+  *base = argc;
+  base += 1;
+
+  char *argv_temp[argc];
+  char *envp_temp[envpc];
+  base += (argc + 1) + (envpc + 1); // jump to string area
+  char *string_area_curr = (char *)base;
+  uintptr_t *string_area_curr_mem = (uintptr_t *)string_area_curr;
+
+  for (int i = 0; i < argc; ++i) {
+      strcpy(string_area_curr, argv[i]);
+      argv_temp[i] = string_area_curr;
+      string_area_curr += (strlen(argv[i]) + 1);
+      Log("argv[%d]: %s, addr: %p", i, argv[i], argv_temp[i]);
+  }
+
+  for (int i = 0; i < envpc; ++i) {
+      strcpy(string_area_curr, envp[i]);
+      envp_temp[i] = string_area_curr;
+      string_area_curr += (strlen(envp[i]) + 1);
+      Log("envp[%d]: %s, addr: %p", i, envp[i], envp_temp[i]);
+  }
+
+  base -= (argc + 1) + (envpc + 1); // jump back
+
+  for (int i = 0; i < argc; ++i) {
+      *base = (uintptr_t)argv_temp[i];
+      base += 1;
+  }
+
+  *base = (uintptr_t)NULL;
+  base += 1;
+
+  for (int i = 0; i < envpc; ++i) {
+      *base = (uintptr_t)envp_temp[i];
+      base += 1;
+  }
+
+  *base = (uintptr_t)NULL;
+  base += 1;
+
+  assert(string_area_curr_mem == base);
+
+  pcb->cp->GPRx = (uintptr_t)base_mem;
+}
+
