@@ -1,35 +1,26 @@
 #include <am.h>
 #include <riscv/riscv.h>
 #include <klib.h>
-#include <nemu.h>
+
 static Context* (*user_handler)(Event, Context*) = NULL;
-void __am_get_cur_as(Context *c);
-void __am_switch(Context *c);
+
 Context* __am_irq_handle(Context *c) {
  //printf("mcause  %d \n",(int)c->mcause);
  //panic("mcause %d",(int)c->mcause);
   if (user_handler) {
     Event ev = {0};
-    switch (c->mcause)
-    {
-    case -1:
-      ev.event = EVENT_YIELD;
-      break;
-    case 0 ... 19:
-      ev.event = EVENT_SYSCALL;
-      break;
-    case 0x80000007:
-      ev.event = EVENT_IRQ_TIMER;
-      break;
-    default:
-      ev.event = EVENT_ERROR;
-      break;
+    switch (c->mcause) {
+      case -1:
+        ev.event=EVENT_YIELD;break;
+        case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8:case 9:case 10:case 11:case 12:case 13:case 14:case 15:case 16:case 17:case 18:case 19:ev.event=EVENT_SYSCALL;break;
+
+      default: ev.event = EVENT_ERROR; break;
     }
     //user_handler是cte_init中注册的回调函数
     c = user_handler(ev, c);
     assert(c != NULL);
   }
-  assert(c->mepc >= 0x40000000 && c->mepc <= 0x88000000);
+  
   return c;
 }
 
