@@ -12,7 +12,7 @@ int main() {
       gettimeofday(&tv, NULL);
     }
     ms += 1000;
-    printf("ms = %d\n", (int)ms/100);
+    printf("s = %d\n", (int)ms/1000);
   }
 }
 
