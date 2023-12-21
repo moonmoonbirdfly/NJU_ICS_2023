@@ -14,7 +14,7 @@ int sys_write(int fd,intptr_t *buf, size_t count){
    return 0;
 }
 int sys_execve(const char *fname, char *const argv[], char *const envp[]);
-
+Context* schedule(Context *prev) ;
 void do_syscall(Context *c) {
   uintptr_t a[4];
   a[0] = c->GPR1; //#define GPR1 gpr[17] // a7
@@ -22,7 +22,7 @@ void do_syscall(Context *c) {
  //printf("执行到do_syscall,此时根据c->GPR1的值来判断属于哪个系统调用 c->GPR2=a7=%d\n",a[0]);
   switch (a[0]) {
     case SYS_exit:c->GPRx=0;printf("SYS_exit， do_syscall此时 c->GPRx=%d\n",c->GPRx);halt(0);//SYS_exit系统调用
-    case SYS_yield:printf("SYS_yield， do_syscall此时c->GPRx=%d\n",c->GPRx);yield(); //SYS_yield系统调用
+    case SYS_yield:printf("SYS_yield， do_syscall此时c->GPRx=%d\n",c->GPRx);c = schedule(c);yield(); //SYS_yield系统调用
     case SYS_brk:c->GPRx=0;break;  
     //case SYS_write:ret=sys_write(c->GPR2,(void *)c->GPR3,(size_t)c->GPR4);break;
  case SYS_write:
