@@ -16,18 +16,18 @@ int sys_execve(const char *fname, char *const argv[], char *const envp[]);
 void do_syscall(Context *c) {
   uintptr_t a[4];
   a[0] = c->GPR1; //#define GPR1 gpr[17] // a7
-  intptr_t ret=0;
+  //intptr_t ret=0;
  printf("执行到do_syscall,此时根据c->GPR1的值来判断属于哪个系统调用 c->GPR1=a7=%d\n",a[0]);
   switch (a[0]) {
     case SYS_exit:c->GPRx=0;printf("SYS_exit， do_syscall此时 c->GPRx=%d\n",c->GPRx);halt(c->GPRx);//SYS_exit系统调用
     case SYS_yield:printf("SYS_yield， do_syscall此时c->GPRx=%d\n",c->GPRx);yield(); //SYS_yield系统调用
     case SYS_brk:c->GPRx=0;break;  
-    case SYS_write:ret=sys_write((void *)c->GPR3,(size_t)c->GPR4); ret=0;break;
+    case SYS_write:sys_write((void *)c->GPR3,(size_t)c->GPR4); break;
 		case SYS_execve:
         //Log("sys_execve(%s, %p, %p)", (const char *)c->GPR2, c->GPR3, c->GPR4);
         sys_execve((const char *)c->GPR2, (char * const*)c->GPR3, (char * const*)c->GPR4);
         while(1);
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
-  c->GPRx=ret;
+  c->GPRx=0;
 }
