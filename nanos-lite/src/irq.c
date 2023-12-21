@@ -6,7 +6,7 @@ static Context *do_event(Event e, Context *c)
   // Log("event is %d\n",e.event);
   switch (e.event)
   {
-  case EVENT_YIELD:
+  case EVENT_YIELD:printf("event ID=%d\nc->GPRx=%d\n",e.event,c->GPRx);halt(0);printf("执行了halt之后");break;
   case EVENT_SYSCALL:
     do_syscall(c);
     break;
