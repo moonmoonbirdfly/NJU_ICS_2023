@@ -3,12 +3,19 @@
 static void *pf = NULL;
 
 void* new_page(size_t nr_page) {
-  return NULL;
+    pf += nr_page * PGSIZE;
+  
+  return pf;
 }
 
 #ifdef HAS_VME
 static void* pg_alloc(int n) {
-  return NULL;
+    int nr_page = n / PGSIZE;
+  assert(nr_page * PGSIZE == n);
+  void *end = new_page(nr_page);
+  void *start = end - n;
+  memset(start, 0, n);
+  return start;
 }
 #endif
 
