@@ -54,22 +54,21 @@ int fs_close(int fd){
 }
 
 size_t fs_read(int fd, void *buf, size_t len){
-  ReadFn readFn = file_table[fd].read;
-  if (readFn != NULL) {
-        // 特殊文件处理
-        size_t open_offset = file_table[fd].open_offset;
-        return readFn(buf, open_offset, len);
+  Finfo *info = &file_table[fd];
+  size_t real_len;
+  
+  //assert(info->open_offset + len <= info->size);
+  if (info->read){
+    real_len = info->read(buf, info->open_offset, len);
+    info->open_offset += real_len;
+  }else {
+    real_len = info->open_offset + len <= info->size ?
+    len : info->size - info->open_offset;
+    ramdisk_read(buf, info->disk_offset + info->open_offset, real_len);
+    info->open_offset += real_len;
   }
-  size_t read_len = len;
-  size_t open_offset = file_table[fd].open_offset;
-  size_t size = file_table[fd].size;
-  size_t disk_offset = file_table[fd].disk_offset;
-  if (open_offset > size) return 0;
-  if (open_offset + len > size) read_len = size - open_offset;
-  ramdisk_read(buf, disk_offset + open_offset, read_len);
-  file_table[fd].open_offset += read_len;
-  return read_len;
 
+  return real_len;
 }
 
 size_t fs_write(int fd, const void *buf, size_t len) {
