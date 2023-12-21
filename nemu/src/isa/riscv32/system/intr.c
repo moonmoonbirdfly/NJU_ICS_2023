@@ -14,7 +14,8 @@
 ***************************************************************************************/
 
 #include <isa.h>
-
+#define MPIE_OFFSET 7
+#define MIE_OFFSET 3
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
  	if(NO==0){
 	  epc+=4;
