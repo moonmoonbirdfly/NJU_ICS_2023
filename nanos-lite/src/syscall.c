@@ -1,5 +1,10 @@
 #include <common.h>
 #include "syscall.h"
+#include "fs.h"
+#include <proc.h>
+#include <sys/time.h>
+#include <stdint.h>
+
 void do_syscall(Context *c) {
   uintptr_t a[4];
   a[0] = c->GPR1; //#define GPR1 gpr[17] // a7
