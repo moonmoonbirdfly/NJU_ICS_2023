@@ -1,5 +1,6 @@
 #include <memory.h>
-
+#include <stdint.h>
+#include <proc.h>
 static void *pf = NULL;
 
 void* new_page(size_t nr_page) {
@@ -22,7 +23,7 @@ static void* pg_alloc(int n) {
 void free_page(void *p) {
   panic("not implement yet");
 }
-
+extern PCB *current;
 /* The brk() system call handler. */
 int mm_brk(uintptr_t brk) {
   return 0;
