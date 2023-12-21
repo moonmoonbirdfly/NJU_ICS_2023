@@ -22,8 +22,8 @@ int main() {
   uint32_t last_tick = NDL_GetTicks();
   while (1) {
     uint32_t tick = NDL_GetTicks();
-    if (tick - last_tick >= 500) {
-      printf("time=%d s\n",(int)tick/100);
+    if (tick - last_tick >= 1000) {
+      printf("time=%d s\n",(int)tick/1000);
       last_tick = tick;
     }
   }
