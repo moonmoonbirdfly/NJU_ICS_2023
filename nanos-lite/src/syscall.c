@@ -6,10 +6,11 @@
 #include <stdint.h>
 int sys_write(int fd,intptr_t *buf, size_t count){
    if(fd==1||fd==2){
-    for (int i = 0; i < count; i++) {
-    putch(*((char*)buf + i));
-  }
-   return count;}
+		  for (int i = 0; i < count; i++) {
+		  putch(*((char*)buf + i));
+			}
+		 return count;
+   }
    return 0;
 }
 int sys_execve(const char *fname, char *const argv[], char *const envp[]);
