@@ -25,6 +25,7 @@ void hello_fun(void *arg) {
     yield();
   }
 }
+int program_index = 1;
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg);
 void context_kload(PCB *pcb, void (*entry)(void *), void *arg) {
   Area stack;
@@ -32,6 +33,20 @@ void context_kload(PCB *pcb, void (*entry)(void *), void *arg) {
   stack.end = pcb->stack + STACK_SIZE;
   pcb->cp = kcontext(stack, entry, arg);
  
+}
+void switch_program_index(int new_index){
+  if (new_index == program_index)
+    return ;
+
+  switch_boot_pcb();  
+  
+  program_index = new_index;
+  pcb[0].cp->pdir = NULL;
+  //TODO: 这是一种trade-off
+  //set_satp(pcb[1].cp->pdir);
+  printf("Switch to PCB[%d]\n", new_index);
+
+  yield();
 }
 void init_proc() {
   switch_boot_pcb();
