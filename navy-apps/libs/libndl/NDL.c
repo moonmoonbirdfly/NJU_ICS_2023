@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <assert.h>
+#include <fcntl.h>
 static int evtdev = -1;
 static int fbdev = -1;
 static int screen_w = 0, screen_h = 0;
