@@ -3,17 +3,20 @@ void do_syscall(Context *c);
 Context* schedule(Context *prev);
 static Context *do_event(Event e, Context *c)
 {
-  // Log("event is %d\n",e.event);
-  switch (e.event)
-  {
-  case EVENT_YIELD:printf("event ID=%d\nc->GPRx=%d\n",e.event,c->GPRx);halt(0);printf("执行了halt之后");break;
-  
-  case EVENT_SYSCALL:
-    do_syscall(c);
-    break;
-  default:
-    panic("Unhandled event ID = %d", e.event);
-  }
+   switch (e.event) {
+    
+    case EVENT_YIELD:
+        c = schedule(c);
+        break;
+    case EVENT_SYSCALL:
+        do_syscall(c);break;
+    case EVENT_IRQ_TIMER: 
+        c = schedule(c);
+        assert(c != NULL);        
+        break;
+    default: panic("Unhandled event ID = %d", e.event);break;
+   }
+  //返回输入的上下文 c，表示处理事件后的上下文状态。
   return c;
 }
 void init_irq(void) {
