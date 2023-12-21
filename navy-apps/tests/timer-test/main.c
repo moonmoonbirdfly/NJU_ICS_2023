@@ -6,13 +6,13 @@ int main() {
   struct timeval tv;
   // struct timezone tz;
   gettimeofday(&tv, NULL);
-  __uint64_t ms = 500;
+  __uint64_t ms = 0;
   while (1) {
     while ((tv.tv_sec * 1000 + tv.tv_usec / 1000) < ms) {
       gettimeofday(&tv, NULL);
     }
     ms += 1000;
-    printf("ms = %d\n", (int)ms);
+    printf("ms = %d\n", (int)ms/100);
   }
 }
 
