@@ -3,7 +3,8 @@
 #include <klib.h>
 
 static Context* (*user_handler)(Event, Context*) = NULL;
-
+void __am_get_cur_as(Context *c);
+void __am_switch(Context *c);
 Context* __am_irq_handle(Context *c) {
  //printf("mcause  %d \n",(int)c->mcause);
  //panic("mcause %d",(int)c->mcause);
