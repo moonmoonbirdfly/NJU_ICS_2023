@@ -39,7 +39,7 @@ void init_proc() {
   Log("Initializing processes...");
 
   // load program here
-	const char filename[] = "/bin/file-text";
+	const char filename[] = "/bin/file-test";
   naive_uload(NULL, filename);
 }
 
