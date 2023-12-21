@@ -24,7 +24,11 @@ void do_syscall(Context *c) {
     case SYS_exit:c->GPRx=0;printf("SYS_exit， do_syscall此时 c->GPRx=%d\n",c->GPRx);halt(0);//SYS_exit系统调用
     case SYS_yield:printf("SYS_yield， do_syscall此时c->GPRx=%d\n",c->GPRx);yield(); //SYS_yield系统调用
     case SYS_brk:c->GPRx=0;break;  
-    case SYS_write:ret=sys_write(c->GPR2,(void *)c->GPR3,(size_t)c->GPR4);break;
+   /* case SYS_write:ret=sys_write(c->GPR2,(void *)c->GPR3,(size_t)c->GPR4);break;*/
+   case SYS_write:
+        ret = fs_write(c->GPR2, (void *)c->GPR3, (size_t)c->GPR4);
+        //Log("fs_write(%d, %p, %d) = %d", c->GPR2, c->GPR3, c->GPR4, ret);
+        break;
 		case SYS_execve:
         //Log("sys_execve(%s, %p, %p)", (const char *)c->GPR2, c->GPR3, c->GPR4);
         sys_execve((const char *)c->GPR2, (char * const*)c->GPR3, (char * const*)c->GPR4);
