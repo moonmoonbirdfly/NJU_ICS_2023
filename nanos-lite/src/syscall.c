@@ -23,7 +23,7 @@ void do_syscall(Context *c) {
         c->GPRx=0;
         break;  
     case SYS_write:
-    
+    	ret=sys_write((void *)c->GPR3, (size_t)c->GPR4);
     break;
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
