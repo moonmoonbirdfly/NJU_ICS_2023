@@ -39,7 +39,7 @@ void init_proc() {
   Log("Initializing processes...");
 
   // load program here
-	const char filename[] = "/bin/event-test";
+	const char filename[] = "/bin/timer-test";
   naive_uload(NULL, filename);
 }
 
