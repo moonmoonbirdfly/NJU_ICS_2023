@@ -48,6 +48,7 @@ int fs_open(const char *pathname, int flags, int mode){
 
 
 int fs_close(int fd){
+ file_table[fd].open_offset = 0;
   return 0;
 }
 
@@ -118,6 +119,6 @@ size_t fs_lseek(int fd, size_t offset, int whence){
 
 void init_fs() {
   // TODO: initialize the size of /dev/fb
- //AM_GPU_CONFIG_T ev = io_read(AM_GPU_CONFIG);
-  //file_table[FD_FB].size = ev.vmemsz;
+ AM_GPU_CONFIG_T ev = io_read(AM_GPU_CONFIG);
+  file_table[FD_FB].size = ev.vmemsz;
 }
