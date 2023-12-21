@@ -19,10 +19,10 @@ void do_syscall(Context *c) {
   intptr_t ret=0;
  //printf("执行到do_syscall,此时根据c->GPR1的值来判断属于哪个系统调用 c->GPR2=a7=%d\n",a[0]);
   switch (a[0]) {
-    case SYS_exit:c->GPRx=0;printf("SYS_exit， do_syscall此时 c->GPRx=%d\n",c->GPRx);halt(c->GPRx);//SYS_exit系统调用
+    case SYS_exit:c->GPRx=0;printf("SYS_exit， do_syscall此时 c->GPRx=%d\n",c->GPRx);halt(0);//SYS_exit系统调用
     case SYS_yield:printf("SYS_yield， do_syscall此时c->GPRx=%d\n",c->GPRx);yield(); //SYS_yield系统调用
     case SYS_brk:c->GPRx=0;break;  
-    case SYS_write:ret=sys_write((void *)c->GPR3,(size_t)c->GPR4);break;
+    case SYS_write:ret=sys_write((void *)c->GPR3,(size_t)c->GPR4);halt(0);
 		case SYS_execve:
         //Log("sys_execve(%s, %p, %p)", (const char *)c->GPR2, c->GPR3, c->GPR4);
         sys_execve((const char *)c->GPR2, (char * const*)c->GPR3, (char * const*)c->GPR4);
