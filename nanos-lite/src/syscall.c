@@ -13,6 +13,13 @@ int sys_write(int fd,intptr_t *buf, size_t count){
    }
    return 0;
 }
+
+int sys_gettimeofday(struct timeval *tv, struct timezone *tz) {
+    uint64_t us = io_read(AM_TIMER_UPTIME).us;
+    tv->tv_sec = us / 1000000;
+    tv->tv_usec = us - us / 1000000 * 1000000;
+    return 0;
+}
 int sys_execve(const char *fname, char *const argv[], char *const envp[]);
 Context* schedule(Context *prev) ;
 void do_syscall(Context *c) {
@@ -45,7 +52,10 @@ void do_syscall(Context *c) {
         ret = fs_lseek(c->GPR2, (size_t)c->GPR3, c->GPR4);
         //Log("fs_lseek(%d, %d, %d) = %d", c->GPR2, c->GPR3, c->GPR4, ret);
         break;     
-        
+    case SYS_gettimeofday:
+        ret = sys_gettimeofday((struct timeval *)c->GPR2, (struct timezone *)c->GPR3);
+        //Log("sys_gettimeofday(%p, %p, %d) = %d", c->GPR2, c->GPR3, c->GPR4, ret);
+        break;    
 		case SYS_execve:
         //Log("sys_execve(%s, %p, %p)", (const char *)c->GPR2, c->GPR3, c->GPR4);
         sys_execve((const char *)c->GPR2, (char * const*)c->GPR3, (char * const*)c->GPR4);
