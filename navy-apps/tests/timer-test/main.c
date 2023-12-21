@@ -23,7 +23,7 @@ int main() {
   while (1) {
     uint32_t tick = NDL_GetTicks();
     if (tick - last_tick >= 500) {
-      printf("Hello world!\n");
+      printf("time=%d s\n",(int)tick/1000);
       last_tick = tick;
     }
   }
