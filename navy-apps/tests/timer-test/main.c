@@ -11,7 +11,7 @@ int main() {
     while ((tv.tv_sec * 1000 + tv.tv_usec / 1000) < ms) {
       gettimeofday(&tv, NULL);
     }
-    ms += 500;
+    ms += 1000;
     printf("ms = %d\n", (int)ms);
   }
 }
