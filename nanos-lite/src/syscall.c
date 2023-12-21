@@ -11,6 +11,7 @@ int sys_write(intptr_t *buf, size_t count){
    return count;
   
 }
+int sys_execve(const char *fname, char *const argv[], char *const envp[]);
 
 void do_syscall(Context *c) {
   uintptr_t a[4];
@@ -22,7 +23,10 @@ void do_syscall(Context *c) {
     case SYS_yield:printf("SYS_yield， do_syscall此时c->GPRx=%d\n",c->GPRx);yield(); //SYS_yield系统调用
     case SYS_brk:c->GPRx=0;break;  
     case SYS_write:ret=sys_write((void *)c->GPR3,(size_t)c->GPR4);break;
-
+		case SYS_execve:
+        //Log("sys_execve(%s, %p, %p)", (const char *)c->GPR2, c->GPR3, c->GPR4);
+        sys_execve((const char *)c->GPR2, (char * const*)c->GPR3, (char * const*)c->GPR4);
+        while(1);
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
   c->GPRx=ret;
