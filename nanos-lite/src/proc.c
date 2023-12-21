@@ -25,7 +25,14 @@ void hello_fun(void *arg) {
     yield();
   }
 }
-
+Context *kcontext(Area kstack, void (*entry)(void *), void *arg);
+void context_kload(PCB *pcb, void (*entry)(void *), void *arg) {
+  Area stack;
+  stack.start = pcb->stack;
+  stack.end = pcb->stack + STACK_SIZE;
+  pcb->cp = kcontext(stack, entry, arg);
+ 
+}
 void init_proc() {
   switch_boot_pcb();
 
