@@ -6,11 +6,7 @@ static Context* (*user_handler)(Event, Context*) = NULL;
 
 Context *__am_irq_handle(Context *c)
 {
-  // __am_get_cur_as(c);
-  // display_context(c);
-  // printf("pte is at %p\n", c->pdir);
-  // printf("cause to interrupt is %d\n", c->GPR1);
-  // display_context(c);
+
   if (user_handler)
   {
     // printf("the exception cause id is %d\n", c->mcause);
@@ -32,23 +28,13 @@ Context *__am_irq_handle(Context *c)
       break;
     }
 
-    // printf("event id is %d\n",ev.event);
-    // printf("here\n");
     c = user_handler(ev, c);
-    // printf("===============");
-    // printf("mepc is %p\n", c->mepc);
-    // printf("c is at %p\n",c);
+
     assert(c != NULL);
   }
-  // printf("ret from interrupt is %p\n", c->GPRx);
-  // ((void (*)())c->mepc)();
-  // c->gpr[0] = 0;
-  // printf("pte is at %p after change\n", c->mepc);
-  // printf("sp is %p\n", c->gpr[2]);
-  // display_context(c);
+
   assert(c->mepc >= 0x40000000 && c->mepc <= 0x88000000);
-  // __am_switch(c);
-  // printf("entry is %p\n", c->mepc);
+
   return c;
 }
 
