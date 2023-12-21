@@ -1,24 +1,22 @@
 #include <common.h>
 void do_syscall(Context *c);
 Context* schedule(Context *prev);
-static Context* do_event(Event e, Context* c) {
-  switch (e.event) {
-    case EVENT_YIELD:
-      // printf("EVENT_YIELD\n");
-      return schedule(c); //存起来了现在的，返回了另一个
-
-    case EVENT_SYSCALL:
-      do_syscall(c);
-      break;
-
-    case EVENT_IRQ_TIMER:
-      //Log("EVENT_IRQ_TIMER happening...");
-      //break;
-      return schedule(c);
-
-    default: panic("Unhandled event ID = %d", e.event);
+static Context *do_event(Event e, Context *c)
+{
+  // Log("event is %d\n",e.event);
+  switch (e.event)
+  {
+  case EVENT_YIELD:
+  case EVENT_IRQ_TIMER:
+    // printf("exchange process\n");
+    c = schedule(c);
+    break;
+  case EVENT_SYSCALL:
+    do_syscall(c);
+    break;
+  default:
+    panic("Unhandled event ID = %d", e.event);
   }
-
   return c;
 }
 void init_irq(void) {
