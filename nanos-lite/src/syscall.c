@@ -11,6 +11,7 @@ int sys_write(intptr_t *buf, size_t count){
    return count;
   
 }
+
 void do_syscall(Context *c) {
   uintptr_t a[4];
   a[0] = c->GPR1; //#define GPR1 gpr[17] // a7
@@ -23,7 +24,7 @@ void do_syscall(Context *c) {
         c->GPRx=0;
         break;  
     case SYS_write:
-    	ret=sys_write((void *)c->GPR3, (size_t)c->GPR4);
+    	ret=sys_write( (void *)c->GPR3, (size_t)c->GPR4);
     break;
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
