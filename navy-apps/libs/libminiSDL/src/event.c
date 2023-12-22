@@ -1,5 +1,7 @@
 #include <NDL.h>
 #include <SDL.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define keyname(k) #k,
 
@@ -62,10 +64,6 @@ int SDL_WaitEvent(SDL_Event *ev) {
 
     free(buf);
     return 1;
-}
-
-int SDL_WaitEvent(SDL_Event *event) {
-  return 1;
 }
 
 int SDL_PeepEvents(SDL_Event *ev, int numevents, int action, uint32_t mask) {
