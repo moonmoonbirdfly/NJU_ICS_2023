@@ -149,7 +149,7 @@ int NDL_Init(uint32_t flags) {
   }
   //解析屏幕高度宽度
   init_dispinfo();
-  printf("screen :WIDTH : %d\nHEIGHT : %d\n", screen_w, screen_h);
+  printf("screen :WIDTH : %dHEIGHT : %d\n", screen_w, screen_h);
   return 0;
 }
 
