@@ -54,7 +54,7 @@ void init_proc() {
   Log("Initializing processes...");
 
   // load program here
-	const char filename[] = "/bin/e";
+	const char filename[] = "/bin/event-file";
   naive_uload(NULL, filename);
 }
 
