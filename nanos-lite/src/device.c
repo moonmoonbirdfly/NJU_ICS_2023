@@ -1,5 +1,7 @@
 #include <common.h>
-
+#include <string.h>
+#include <stdio.h>
+#include <stdint.h>
 #if defined(MULTIPROGRAM) && !defined(TIME_SHARING)
 # define MULTIPROGRAM_YIELD() yield()
 #else
@@ -18,18 +20,54 @@ size_t serial_write(const void *buf, size_t offset, size_t len) {
   for (size_t i = 0; i < len; ++i) putch(*((char *)buf + i));
   return len;
 }
+void switch_program_index(int new_index);
+
+//offset被忽视
 size_t events_read(void *buf, size_t offset, size_t len) {
+  //yield();
   AM_INPUT_KEYBRD_T ev = io_read(AM_INPUT_KEYBRD);
-  int ret = snprintf(buf, len, "%s %s\n", ev.keydown?"kd":"ku", keyname[ev.keycode]);
-  printf("%s\n", ret);
-  if (ev.keycode == AM_KEY_NONE) {
-    *(char*)buf = '\0';
-    return 0;
-  }
+  if (ev.keycode == AM_KEY_NONE) return 0;
   
- 
-  return ret;
+  switch (ev.keycode){
+  case AM_KEY_F1:
+    switch_program_index(1);
+    return 0;
+
+  case AM_KEY_F2:
+    switch_program_index(2);
+    return 0;
+
+  case AM_KEY_F3:
+    switch_program_index(3);
+    return 0;
+  
+  default:
+    break;
+  }
+
+  //int real_length = 4;
+  char *tag = ev.keydown ? "kd " : "ku ";
+  //if (real_length <= len){
+  strcpy(buf, tag);
+  // }else {
+  //   assert(0);
+  //   return 0;
+  // }
+  
+  //real_length += strlen(keyname[ev.keycode]);
+  
+  //if (real_length<= len){
+  strcat(buf, keyname[ev.keycode]);
+  // }else {
+  //   Log("Need %d for %s%s but got %d", strlen(keyname[ev.keycode]), (char *)buf, keyname[ev.keycode], len);
+  //   assert(0);
+  //   return 0;
+  // }
+  Log("Got  (kbd): %s (%d) %s\n", keyname[ev.keycode], ev.keycode, ev.keydown ? "DOWN" : "UP");
+  
+  return 1;
 }
+
 
 
 size_t dispinfo_read(void *buf, size_t offset, size_t len) {
