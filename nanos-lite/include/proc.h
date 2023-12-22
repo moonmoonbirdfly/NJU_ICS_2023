@@ -17,5 +17,5 @@ typedef union {
 } PCB;
 
 extern PCB *current;
-
+void set_fg_pcb(uint32_t process_id);
 #endif
