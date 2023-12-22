@@ -14,15 +14,7 @@ typedef struct {
 } Finfo;
 
 enum {FD_STDIN, FD_STDOUT, FD_STDERR, DEV_EVENTS, PROC_DISPINFO,FD_FB};
-static size_t file_read(void *buf, size_t offset, size_t len)
-{
-  return ramdisk_read(buf, offset, len);
-}
 
-static size_t file_write(const void *buf, size_t offset, size_t len)
-{
-  return ramdisk_write(buf, offset, len);
-}
 size_t invalid_read(void *buf, size_t offset, size_t len) {
   panic("should not reach here");
   return 0;
@@ -133,20 +125,8 @@ size_t fs_lseek(int fd, size_t offset, int whence){
     return new_offset;
 }
 
-void init_fs()
-{
-  for (size_t fd = 6; fd < NR_FILES; ++fd)
-  {
-    if (file_table[fd].write == NULL)
-      file_table[fd].write = file_write;
-    if (file_table[fd].read == NULL)
-      file_table[fd].read = file_read;
-  }
+void init_fs() {
   // TODO: initialize the size of /dev/fb
-
-  AM_GPU_CONFIG_T gpu_config;
-  ioe_read(AM_GPU_CONFIG, &gpu_config);
-  int width = gpu_config.width, height = gpu_config.height;
-  int fb_fd = fs_open("/dev/fb", 0, 0);
-  file_table[fb_fd].size = width * height;
+ AM_GPU_CONFIG_T ev = io_read(AM_GPU_CONFIG);
+  file_table[FD_FB].size = ev.vmemsz;
 }
