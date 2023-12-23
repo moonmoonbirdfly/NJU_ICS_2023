@@ -101,34 +101,31 @@ size_t fs_write(int fd, const void *buf, size_t len) {
 }
 
 size_t fs_lseek(int fd, size_t offset, int whence){
-  if (fd <= 2) {
-        Log("ignore lseek %s", file_table[fd].name);
-        return 0;
+  Finfo *info = &file_table[fd];
+
+  switch(whence){
+    case SEEK_CUR:
+      assert(info->open_offset + offset <= info->size);
+      info->open_offset += offset;
+      break;
+
+    case SEEK_SET:
+      assert(offset <= info->size);
+      info->open_offset = offset;
+      break;
+
+    case SEEK_END:
+      assert(offset <= info->size);
+      info->open_offset = info->size + offset;
+      break;
+
+    default:
+      assert(0);
   }
 
-  Finfo *file = &file_table[fd];
-  size_t new_offset;
-  // 根据 whence 参数来计算新的指针位置
-    if (whence == SEEK_SET) {
-        new_offset = offset;
-    } else if (whence == SEEK_CUR) {
-        new_offset = file->open_offset + offset;
-    } else if (whence == SEEK_END) {
-        new_offset = file->size + offset;
-    } else {
-        Log("Invalid whence value: %d", whence);
-        return -1;
-    }
-     // 检查新的指针位置是否在文件范围内
-    if (new_offset < 0 || new_offset > file->size) {
-        Log("Seek position out of bounds");
-        return -1;
-    }
-     // 设置新的文件读写指针
-    file->open_offset = new_offset;
-    
-    return new_offset;
+  return info->open_offset;
 }
+
 
 void init_fs() {
   // TODO: initialize the size of /dev/fb
