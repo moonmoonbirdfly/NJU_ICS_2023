@@ -10,6 +10,10 @@ static const char *keyname[] = {
   _KEYS(keyname)
 };
 
+int SDL_PushEvent(SDL_Event *ev) {
+  return 0;
+}
+
 int SDL_PollEvent(SDL_Event *ev) {
   unsigned buf_size = 32;
   char *buf = (char *)malloc(buf_size * sizeof(char));
