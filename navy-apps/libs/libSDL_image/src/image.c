@@ -12,7 +12,6 @@ SDL_Surface* IMG_Load_RW(SDL_RWops *src, int freesrc) {
 }
 
 SDL_Surface* IMG_Load(const char *filename) {
-  SDL_Surface* IMG_Load(const char *filename) {
     FILE * fp = fopen(filename, "r");
     if (!fp) return NULL;
 
@@ -31,7 +30,7 @@ SDL_Surface* IMG_Load(const char *filename) {
 
     return surface;
 }
-}
+
 
 int IMG_isPNG(SDL_RWops *src) {
   return 0;
