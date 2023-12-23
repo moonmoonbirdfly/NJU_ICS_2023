@@ -32,7 +32,7 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
       }
     }
   }else if (src->format->BitsPerPixel == 8){
-    uint8_t* src_pixels = (uint8_t*)src->pixels;
+   /* uint8_t* src_pixels = (uint8_t*)src->pixels;
     uint8_t* dst_pixels = (uint8_t*)dst->pixels;
 
     int rect_w, rect_h, src_x, src_y, dst_x, dst_y;
@@ -53,7 +53,8 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
       for (int j = 0; j < rect_w; ++j){
         dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
       }
-    }
+    }*/
+    return;
   }else {
     assert(0);
   }
@@ -61,36 +62,27 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
 }
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
-  uint32_t *pixels = (uint32_t *)dst->pixels;
-  int dst_w = dst->w;
-  int rect_h, rect_w, rect_x, rect_y;
-
-  if (dstrect == NULL){
-    rect_w = dst->w;
-    rect_h = dst->h;
-    rect_x = 0;
-    rect_y = 0;
-  }else {
-    rect_w = dstrect->w;
-    rect_h = dstrect->h;
-    rect_x = dstrect->x;
-    rect_y = dstrect->y;
-  }
-
-  for (int i = 0; i < rect_h; ++i){
-    for (int j = 0; j < rect_w; ++j){
-      pixels[(rect_y + i) * dst_w + rect_x + j] = color;
+    uint32_t * base = (uint32_t *)dst->pixels;
+    if (dstrect == NULL) {
+        for (int i = 0; i < dst->w * dst->h; ++i) base[i] = color;
+        return;
     }
-  }
+    
+    int rect_x = dstrect->x;
+    int rect_y = dstrect->y;
+    int rect_w = dstrect->w < (dst->w - dstrect->x) ? dstrect->w : (dst->w - dstrect->x);
+    int rect_h = dstrect->h < (dst->h - dstrect->y) ? dstrect->h : (dst->h - dstrect->y);
 
+    for (int i = 0; i < rect_h; ++i) {
+        for (int j = 0; j < rect_w; ++j) {
+            base[(rect_y + i) * dst->w + rect_x + j] = color;
+        }
+    }
+    return;
 }
-
 static inline uint32_t translate_color(SDL_Color *color){
   return (color->a << 24) | (color->r << 16) | (color->g << 8) | color->b;
 }
-
-//static uint32_t piexls_buffer[SDL_FULLSCREEN];
-
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
   if (s->format->BitsPerPixel == 32){
     if (w == 0 && h == 0 && x ==0 && y == 0){
@@ -109,7 +101,7 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
 
     free(pixels);
   }else if(s->format->BitsPerPixel == 8){
-    if (w == 0 && h == 0 && x ==0 && y == 0){
+    /*if (w == 0 && h == 0 && x ==0 && y == 0){
       w = s->w; h = s->h;
       x = 0;    y = 0;
     }
@@ -126,12 +118,11 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
     }
     NDL_DrawRect(pixels, x, y, w, h);
 
-    free(pixels);
+    free(pixels);*/
   }else {
     assert(0);
   }
 }
-
 // APIs below are already implemented.
 
 static inline int maskToShift(uint32_t mask) {
