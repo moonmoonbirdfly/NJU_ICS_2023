@@ -59,8 +59,8 @@ void NDL_OpenCanvas(int *w, int *h) {
   canvas_h = *h;
   canvas_x=(screen_w - canvas_w) / 2;
   canvas_y=(screen_h - canvas_h) / 2;
-  printf("画布的大小为宽%d X 高%d\n",canvas_w,canvas_h);
-  printf("相对于屏幕左上角的画布位置坐标x:%d,y:%d\n",canvas_x,canvas_y);
+  printf("canvas width %d X height %d\n",canvas_w,canvas_h);
+  printf("relative to left up direction x:%d,y:%d\n",canvas_x,canvas_y);
 }
 
 void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
