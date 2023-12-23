@@ -33,16 +33,14 @@ size_t invalid_write(const void *buf, size_t offset, size_t len) {
 /* This is the information about all files in disk. */
 static Finfo file_table[] __attribute__((used)) = {
   [FD_STDIN]  = {"stdin", 0, 0, invalid_read, invalid_write},
-  [FD_STDOUT] = {"stdout", 0, 0, invalid_read, serial_write},
-  [FD_STDERR] = {"stderr", 0, 0, invalid_read, serial_write},
+  [FD_STDOUT] = {"stdout", 0, 0, invalid_read,  serial_write},
+  [FD_STDERR] = {"stderr", 0, 0, invalid_read,  invalid_write},//invalid_write
   [DEV_EVENTS] = {"/dev/events", 0, 0, events_read, invalid_write},
   [PROC_DISPINFO] = {"/proc/dispinfo", 0, 0, dispinfo_read, invalid_write},
   [FD_FB] = {"/dev/fb", 0, 0, invalid_read, fb_write},
 #include "files.h"
 };
-
 #define NR_FILES (sizeof(file_table) / sizeof(file_table[0]))
-
 int fs_open(const char *pathname, int flags, int mode){
   for (int i = 0; i < NR_FILES; i++) {
         if (strcmp(file_table[i].name, pathname) == 0) {
@@ -51,10 +49,12 @@ int fs_open(const char *pathname, int flags, int mode){
         }
     }
   panic("file %s not found", pathname);
+  return -1;
 }
 
 
 int fs_close(int fd){
+ file_table[fd].open_offset = 0;
   return 0;
 }
 
@@ -130,10 +130,10 @@ size_t fs_lseek(int fd, size_t offset, int whence){
     return new_offset;
 }
 
-
 void init_fs() {
   // TODO: initialize the size of /dev/fb
-   AM_GPU_CONFIG_T ev = io_read(AM_GPU_CONFIG);
-  file_table[FD_FB].size = ev.vmemsz;
-
+ AM_GPU_CONFIG_T ev = io_read(AM_GPU_CONFIG);
+  int width = ev.width;
+  int height = ev.height;
+   file_table[FD_FB].size = width * height * sizeof(uint32_t);
 }

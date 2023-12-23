@@ -8,9 +8,11 @@
 #include <fcntl.h>
 static int evtdev = -1;
 static int fbdev = -1;
+//屏幕大小
 static int screen_w = 0, screen_h = 0;
+//画布大小
 static int canvas_w=0,canvas_h=0;
-
+//相对于屏幕左上角的画布位置坐标
 static int canvas_x=0,canvas_y=0;
 
 uint32_t NDL_GetTicks() {
