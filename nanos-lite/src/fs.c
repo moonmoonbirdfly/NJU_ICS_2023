@@ -78,41 +78,27 @@ size_t fs_read(int fd, void *buf, size_t len){
 }
 
 size_t fs_write(int fd, const void *buf, size_t len) {
-    // 首先，检查文件描述符是否有效，特别是如果 fd 是标准输入，则不能写入
-    if (fd < 0 || fd >= NR_FILES) {
-        Log("Invalid file descriptor: %d", fd);
+    if (fd == 0) {
+        Log("ignore write %s", file_table[fd].name);
         return 0;
     }
 
-    // 获取关联的文件信息结构
-    Finfo *finfo = &file_table[fd];
-
-    // 特殊文件处理，比如写到串口或帧缓冲区
-    if (finfo->write != NULL) {
-        // 调用特定文件的写函数
-        return finfo->write(buf, finfo->open_offset, len);
+    WriteFn writeFn = file_table[fd].write;
+    if (writeFn != NULL) {
+        // 特殊文件处理
+      size_t open_offset = file_table[fd].open_offset;
+      return writeFn(buf, open_offset, len);
     }
-
-    // 标准磁盘文件处理
-    if (finfo->disk_offset != 0) {
-        size_t write_capacity = finfo->size - finfo->open_offset;
-        size_t to_write = len < write_capacity ? len : write_capacity;
-
-        if (to_write > 0) {
-            // 实际写入磁盘的函数
-            size_t written = ramdisk_write(buf, finfo->disk_offset + finfo->open_offset, to_write);
-            // 更新文件偏移量
-            finfo->open_offset += written;
-            return written;
-        } 
-        return 0; // 如果没有空间写入，则返回0
-    }
-
-    // 对于没有设置写操作的文件，返回无效操作
-    Log("Write operation not supported for %s", finfo->name);
-    return -1;
+    size_t write_len = len;
+    size_t open_offset = file_table[fd].open_offset;
+    size_t size = file_table[fd].size;
+    size_t disk_offset = file_table[fd].disk_offset;
+    if (open_offset > size) return 0;
+    if (open_offset + len > size) write_len = size - open_offset;
+    ramdisk_write(buf, disk_offset + open_offset, write_len);
+    file_table[fd].open_offset += write_len;
+    return write_len;
 }
-
 
 size_t fs_lseek(int fd, size_t offset, int whence){
   if (fd <= 2) {
