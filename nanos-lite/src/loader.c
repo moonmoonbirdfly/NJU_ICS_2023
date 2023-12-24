@@ -74,89 +74,59 @@ void naive_uload(PCB *pcb, const char *filename) {
 }
 
 void context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[]) {
-  Log("filename: %s", filename);
+  // Load the ELF executable from filename
   uintptr_t entry = loader(pcb, filename);
+  Log("Loaded: %s, Jump to entry = %p", filename, entry);
 
+  // Prepare the stack for the new process
   Area stack;
   stack.start = pcb->stack;
   stack.end = pcb->stack + STACK_SIZE;
 
-  Log("stack.start: %p, stack.end: %p", stack.start, stack.end);
-  Log("entry: %p", entry);
+  // Create the process context (ucontext) with the stack and entry point
+  pcb->cp = ucontext(NULL, stack, (void(*)())entry);
 
-  // prepare entry point
-  pcb->cp = ucontext(NULL, stack, (void(*)()) entry);
+  // Prepare the arguments (argv) and environment variables (envp) on the stack
+  char **user_stack = (char**)stack.end;
 
-  // prepare argv and envp
-  void *ustack_end = new_page(8);
-  int space_count = 0; // unit: the size of pointer
-  // TODO: unspecified part
+  // Calculate the amount of space needed for argv, envp, and the strings themselves
+  int argc = 0, envc = 0;
+  size_t strings_space = 0;
 
-  int argc = 0;
-  if (argv) while (argv[argc]) {
-      // Log("argv[%d]: %s", argc, argv[argc]); 
-      argc++;
+  // Calculate for argv
+  for (; argv && argv[argc]; argc++) {
+    strings_space += strlen(argv[argc]) + 1;
   }
-  space_count += sizeof(uintptr_t); // for argc
-  space_count += sizeof(uintptr_t) * (argc + 1); // for argv
-  if (argv) for (int i = 0; i < argc; ++i) space_count += (strlen(argv[i]) + 1);
-
-  int envpc = 0;
-  if (envp) while (envp[envpc]) envpc++;
-  space_count += sizeof(uintptr_t) * (envpc + 1); // for envp
-  if (envp) for (int i = 0; i < envpc; ++i) space_count += (strlen(envp[i]) + 1);
-
-  Log("argc: %d, envpc: %d, space_count: %d", argc, envpc, space_count);
-
-  space_count += sizeof(uintptr_t); // for ROUNDUP
-  Log("base before ROUNDUP: %p", ustack_end - space_count);
-  uintptr_t *base = (uintptr_t *)ROUNDUP(ustack_end - space_count, sizeof(uintptr_t));
-  uintptr_t *base_mem = base;
-  Log("base after ROUNDUP: %p", base);
-
-  *base = argc;
-  base += 1;
-
-  char *argv_temp[argc];
-  char *envp_temp[envpc];
-  base += (argc + 1) + (envpc + 1); // jump to string area
-  char *string_area_curr = (char *)base;
-  uintptr_t *string_area_curr_mem = (uintptr_t *)string_area_curr;
-
-  for (int i = 0; i < argc; ++i) {
-      strcpy(string_area_curr, argv[i]);
-      argv_temp[i] = string_area_curr;
-      string_area_curr += (strlen(argv[i]) + 1);
-      Log("argv[%d]: %s, addr: %p", i, argv[i], argv_temp[i]);
+  // Calculate for envp
+  for (; envp && envp[envc]; envc++) {
+    strings_space += strlen(envp[envc]) + 1;
   }
 
-  for (int i = 0; i < envpc; ++i) {
-      strcpy(string_area_curr, envp[i]);
-      envp_temp[i] = string_area_curr;
-      string_area_curr += (strlen(envp[i]) + 1);
-      Log("envp[%d]: %s, addr: %p", i, envp[i], envp_temp[i]);
+  // Calculate the total size for the array pointers plus the strings
+  size_t pointers_space = (argc + envc + 2) * sizeof(char*) + sizeof(uintptr_t); // +2 for the NULL terminators, +1 for argc
+  user_stack = (char**)((char*)user_stack - (pointers_space + strings_space));
+  
+  // Copy the argument pointers and the strings to the stack
+  char* strings_top = (char*)(user_stack + argc + envc + 2); // +2 for the NULL terminators, starts after the pointers
+  for (int i = 0; i < argc; i++) {
+    user_stack[i] = strings_top;
+    strcpy(strings_top, argv[i]);
+    strings_top += strlen(argv[i]) + 1;
   }
+  user_stack[argc] = NULL; // NULL-terminate the argv array
 
-  base -= (argc + 1) + (envpc + 1); // jump back
-
-  for (int i = 0; i < argc; ++i) {
-      *base = (uintptr_t)argv_temp[i];
-      base += 1;
+  // Copy the environment variable pointers and the strings to the stack
+  char** envp_user_stack = user_stack + argc + 1; // +1 to skip over the NULL terminator
+  for (int i = 0; i < envc; i++) {
+    envp_user_stack[i] = strings_top;
+    strcpy(strings_top, envp[i]);
+    strings_top += strlen(envp[i]) + 1;
   }
+  envp_user_stack[envc] = NULL; // NULL-terminate the envp array
 
-  *base = (uintptr_t)NULL;
-  base += 1;
-
-  for (int i = 0; i < envpc; ++i) {
-      *base = (uintptr_t)envp_temp[i];
-      base += 1;
-  }
-
-  *base = (uintptr_t)NULL;
-  base += 1;
-
-  assert(string_area_curr_mem == base);
-
-  pcb->cp->GPRx = (uintptr_t)base_mem;
+  // Store the initial stack pointer in the process context
+  pcb->cp->GPRx = (uintptr_t)user_stack;
+  Log("Initial stack pointer: %p", pcb->cp->GPRx);
 }
+
 
