@@ -11,128 +11,118 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
   assert(dst && src);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
 
-  // 计算源矩形的位置和尺寸
-  int src_x = srcrect ? srcrect->x : 0;
-  int src_y = srcrect ? srcrect->y : 0;
-  int rect_w = srcrect ? srcrect->w : src->w;
-  int rect_h = srcrect ? srcrect->h : src->h;
+  if (src->format->BitsPerPixel == 32){
+    uint32_t* src_pixels = (uint32_t*)src->pixels;
+    uint32_t* dst_pixels = (uint32_t*)dst->pixels;
 
-  // 计算目标矩形的位置
-  int dst_x = dstrect ? dstrect->x : 0;
-  int dst_y = dstrect ? dstrect->y : 0;
-
-  // 检查像素位数
-  if (src->format->BitsPerPixel != 8 && src->format->BitsPerPixel != 32) {
-    assert(0); // 仅支持8位和32位像素格式
-  }
-
-  // 定义获得像素地址的宏
-#define PIXEL_POS(surface, x, y) ((uint8_t*)(surface)->pixels + (y) * (surface)->pitch + (x) * ((surface)->format->BytesPerPixel))
-
-  // 按照像素深度进行循环，复制对应的像素数据
-  int bpp = src->format->BytesPerPixel;
-  for (int i = 0; i < rect_h; ++i) {
-    for (int j = 0; j < rect_w; ++j) {
-      // 计算源与目标的像素位置
-      uint8_t* src_pixel_pos = PIXEL_POS(src, src_x + j, src_y + i);
-      uint8_t* dst_pixel_pos = PIXEL_POS(dst, dst_x + j, dst_y + i);
-
-      // 根据像素位数进行像素数据复制
-      if (bpp == 4) {
-        *(uint32_t*)dst_pixel_pos = *(uint32_t*)src_pixel_pos;
-      } else if (bpp == 1) {
-        *dst_pixel_pos = *src_pixel_pos;
+    int rect_w, rect_h, src_x, src_y, dst_x, dst_y;
+    if (srcrect){
+      rect_w = srcrect->w; rect_h = srcrect->h;
+      src_x = srcrect->x; src_y = srcrect->y; 
+    }else {
+      rect_w = src->w; rect_h = src->h;
+      src_x = 0; src_y = 0;
+    }
+    if (dstrect){
+      dst_x = dstrect->x, dst_y = dstrect->y;
+    }else {
+      dst_x = 0; dst_y = 0;
+    }
+    
+    for (int i = 0; i < rect_h; ++i){
+      for (int j = 0; j < rect_w; ++j){
+        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
       }
     }
-  }
+  }else if (src->format->BitsPerPixel == 8){
+    uint8_t* src_pixels = (uint8_t*)src->pixels;
+    uint8_t* dst_pixels = (uint8_t*)dst->pixels;
 
-#undef PIXEL_POS
+    int rect_w, rect_h, src_x, src_y, dst_x, dst_y;
+    if (srcrect){
+      rect_w = srcrect->w; rect_h = srcrect->h;
+      src_x = srcrect->x; src_y = srcrect->y; 
+    }else {
+      rect_w = src->w; rect_h = src->h;
+      src_x = 0; src_y = 0;
+    }
+    if (dstrect){
+      dst_x = dstrect->x, dst_y = dstrect->y;
+    }else {
+      dst_x = 0; dst_y = 0;
+    }
+    
+    for (int i = 0; i < rect_h; ++i){
+      for (int j = 0; j < rect_w; ++j){
+        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
+      }
+    }
+  }else {
+    assert(0);
+  }
+  
 }
 
-
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
-  // 确定要填充的区域
-  int x, y, w, h;
-  if (dstrect) {
-    // 确保矩形区域不超出曲面的边界
-    x = dstrect->x;
-    y = dstrect->y;
-    w = (x + dstrect->w > dst->w) ? dst->w - x : dstrect->w;
-    h = (y + dstrect->h > dst->h) ? dst->h - y : dstrect->h;
-  } else {
-    x = y = 0;
-    w = dst->w;
-    h = dst->h;
-  }
-
-  // 计算开始填充的地址
-  uint8_t *pixel = (uint8_t*)dst->pixels + y * dst->pitch + x * dst->format->BytesPerPixel;
-
-  // 根据像素的字节数进行行填充
-  for (int i = 0; i < h; ++i) {
-    // 判断格式并做填充
-    if (dst->format->BytesPerPixel == 4) {
-      // 32位即每个像素4字节
-      uint32_t* row_pixel = (uint32_t*) (pixel + i * dst->pitch);
-      for (int j = 0; j < w; ++j) {
-        row_pixel[j] = color;
-      }
-    } else if (dst->format->BytesPerPixel == 1) {
-      // 8位即每个像素1字节（此部分为假设代码）
-      // 实际上此处应该依赖于调色板来选择颜色，但是在本例中我们做简化处理
-      memset(pixel + i * dst->pitch, (uint8_t)color, w);
-    } else {
-      // 如果有其他像素大小/格式类可以添加其他的处理逻辑
-      assert(0); // 不支持的像素格式
+    uint32_t * base = (uint32_t *)dst->pixels;
+    if (dstrect == NULL) {
+        for (int i = 0; i < dst->w * dst->h; ++i) base[i] = color;
+        return;
     }
-  }
+    
+    int rect_x = dstrect->x;
+    int rect_y = dstrect->y;
+    int rect_w = dstrect->w < (dst->w - dstrect->x) ? dstrect->w : (dst->w - dstrect->x);
+    int rect_h = dstrect->h < (dst->h - dstrect->y) ? dstrect->h : (dst->h - dstrect->y);
+
+    for (int i = 0; i < rect_h; ++i) {
+        for (int j = 0; j < rect_w; ++j) {
+            base[(rect_y + i) * dst->w + rect_x + j] = color;
+        }
+    }
+    return;
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
-  if (s->format->BitsPerPixel == 32) {
-    if (w == 0) w = s->w;
-    if (h == 0) h = s->h;
+  if (s->format->BitsPerPixel == 32){
+    if (w == 0 && h == 0 && x ==0 && y == 0){
+      //printf("%d %d\n", s->w, s->h);
+      NDL_DrawRect((uint32_t *)s->pixels, 0, 0, s->w, s->h);
+      return ;
+    }
+    
+    uint32_t *pixels = malloc(w * h * sizeof(uint32_t));
+    assert(pixels);
+    uint32_t *src = (uint32_t *)s->pixels;
+    for (int i = 0; i < h; ++i){
+      memcpy(&pixels[i * w], &src[(y + i) * s->w + x], sizeof(uint32_t) * w);
+    }
+    NDL_DrawRect(pixels, x, y, w, h);
 
-    // 如果矩形是整个表面，则直接绘制整个表面
-    if (x == 0 && y == 0 && w == s->w && h == s->h) {
-      NDL_DrawRect((uint32_t *)s->pixels, x, y, w, h);
-    } else {
-      // 否则，绘制指定矩形区域内的每一个像素
-      for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < w; ++j) {
-          uint32_t *pixel = (uint32_t *)s->pixels + (y + i) * s->w + (x + j);
-          NDL_DrawRect(pixel, x + j, y + i, 1, 1); // 绘制单个像素
-        }
+    free(pixels);
+  }else if(s->format->BitsPerPixel == 8){
+    if (w == 0 && h == 0 && x ==0 && y == 0){
+      w = s->w; h = s->h;
+      x = 0;    y = 0;
+    }
+
+    uint32_t *pixels = malloc(w * h * sizeof(uint32_t));
+    assert(pixels);
+    uint8_t *src = (uint8_t *)s->pixels;
+
+    for (int i = 0; i < h; ++i){
+      for (int j = 0; j < w; ++j){
+        pixels[i * w + j] = translate_color(&s->format->palette->colors[src[(y + i) * s->w + x + j]]);
+        //pixels[i * w + j] = s->format->palette->colors[src[(y + i) * s->w + x + j]].val;
       }
     }
-  } else if (s->format->BitsPerPixel == 8) {
-    // 处理8位色深度
-    if (w == 0) w = s->w;
-    if (h == 0) h = s->h;
-  
-    // 和32位色深度一样，如果是整个表面就一次性绘制，否则逐像素绘制
-    if (x == 0 && y == 0 && w == s->w && h == s->h) {
-      uint32_t pixels[s->w * s->h];
-      for (int i = 0; i < s->h; ++i) {
-        for (int j = 0; j < s->w; ++j) {
-          pixels[i * s->w + j] = translate_color(&s->format->palette->colors[((uint8_t *)s->pixels)[i * s->w + j]]);
-        }
-      }
-      NDL_DrawRect(pixels, x, y, w, h);
-    } else {
-      // 绘制给定范围内的每个像素
-      for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < w; ++j) {
-          uint32_t pixel = translate_color(&s->format->palette->colors[((uint8_t *)s->pixels)[(y + i) * s->w + (x + j)]]);
-          NDL_DrawRect(&pixel, x + j, y + i, 1, 1); // 绘制单个像素
-        }
-      }
-    }
-  } else {
-    assert(0); // 不支持的色彩深度
+    NDL_DrawRect(pixels, x, y, w, h);
+
+    free(pixels);
+  }else {
+    assert(0);
   }
 }
-
 // APIs below are already implemented.
 
 static inline int maskToShift(uint32_t mask) {
