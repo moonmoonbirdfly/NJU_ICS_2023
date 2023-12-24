@@ -92,43 +92,54 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
     if (w == 0) w = s->w;
     if (h == 0) h = s->h;
 
-    // 如果矩形是整个表面，则直接绘制整个表面
+    // 判断是否需要更新整个表面
     if (x == 0 && y == 0 && w == s->w && h == s->h) {
       NDL_DrawRect((uint32_t *)s->pixels, x, y, w, h);
     } else {
-      // 否则，绘制指定矩形区域内的每一个像素
-      for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < w; ++j) {
-          uint32_t *pixel = (uint32_t *)s->pixels + (y + i) * s->w + (x + j);
-          NDL_DrawRect(pixel, x + j, y + i, 1, 1); // 绘制单个像素
+      // 更新表面的一部分区域。由于 `NDL_DrawRect` 无法做局部更新
+      // 我们需要创建一个新的临时buffer来存储要更新的像素。
+      uint32_t *tempPixels = (uint32_t*) malloc(w * h * sizeof(uint32_t));
+      assert(tempPixels);
+
+      for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+          // 复制所需像素到临时buffer
+          tempPixels[i * w + j] = ((uint32_t*)s->pixels)[(y+i) * s->w + (x+j)];
         }
       }
+
+      // 绘制这部分区域
+      NDL_DrawRect(tempPixels, x, y, w, h);
+
+      // 释放临时buffer
+      free(tempPixels);
     }
   } else if (s->format->BitsPerPixel == 8) {
-    // 处理8位色深度
+    // 8位色彩深度的情况因为色彩需要用查找表来处理
+    // 该情况下绘制需要将8位色转换为32位色
     if (w == 0) w = s->w;
     if (h == 0) h = s->h;
-  
-    // 和32位色深度一样，如果是整个表面就一次性绘制，否则逐像素绘制
-    if (x == 0 && y == 0 && w == s->w && h == s->h) {
-      uint32_t pixels[s->w * s->h];
-      for (int i = 0; i < s->h; ++i) {
-        for (int j = 0; j < s->w; ++j) {
-          pixels[i * s->w + j] = translate_color(&s->format->palette->colors[((uint8_t *)s->pixels)[i * s->w + j]]);
-        }
-      }
-      NDL_DrawRect(pixels, x, y, w, h);
-    } else {
-      // 绘制给定范围内的每个像素
-      for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < w; ++j) {
-          uint32_t pixel = translate_color(&s->format->palette->colors[((uint8_t *)s->pixels)[(y + i) * s->w + (x + j)]]);
-          NDL_DrawRect(&pixel, x + j, y + i, 1, 1); // 绘制单个像素
-        }
+
+    uint32_t *tempPixels = (uint32_t*) malloc(w * h * sizeof(uint32_t));
+    assert(tempPixels);
+
+    for (int i = 0; i < h; i++) {
+      for (int j = 0; j < w; j++) {
+        // 获取查找表中的颜色，然后转换为32位色彩
+        uint8_t index = ((uint8_t*)s->pixels)[(y+i) * s->w + (x+j)];
+        SDL_Color color = s->format->palette->colors[index];
+        tempPixels[i * w + j] = translate_color(&color);
       }
     }
-  } else {
-    assert(0); // 不支持的色彩深度
+
+    // 绘制这部分区域
+    NDL_DrawRect(tempPixels, x, y, w, h);
+
+    // 释放临时buffer
+    free(tempPixels);
+  }else {
+    // 不支持的位深度
+    assert(0);
   }
 }
 
