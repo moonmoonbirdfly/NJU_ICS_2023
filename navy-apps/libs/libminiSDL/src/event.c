@@ -48,9 +48,6 @@ static int pop(uint8_t *type, uint8_t *sym){
 
 static uint8_t key_state[sizeof(keyname) / sizeof(keyname[0])] = {0};
 
-
-
-
 int SDL_PushEvent(SDL_Event *ev) {
   assert(0);
   return 0;
@@ -144,29 +141,6 @@ int SDL_WaitEvent(SDL_Event *event) {
       break;
   }
 
-  // char buf[64], action[8], key[32];
-  
-  // while (!NDL_PollEvent(buf, sizeof(buf))) {}
-  
-  // //注意：这里代码和Poll中重复
-  // sscanf(buf, "%s %s", action, key);
-  
-  // if (strcmp("kd", action) == 0){
-  //   event->type = SDL_KEYDOWN;
-  // }else if(strcmp("ku", action) == 0){
-  //   event->type = SDL_KEYUP;
-  // }else {
-  //   assert(0);
-  // }
-
-  // for (int i = 0; i < sizeof(keyname) / sizeof(char *); ++i){
-  //   if (strcmp(key, keyname[i]) == 0){
-  //     event->key.keysym.sym = i;
-  //     break ;
-  //   }
-  // }
-
-  // return 1;
 }
 
 int SDL_PeepEvents(SDL_Event *ev, int numevents, int action, uint32_t mask) {
@@ -179,6 +153,5 @@ uint8_t* SDL_GetKeyState(int *numkeys) {
 
   if (numkeys)
     *numkeys = sizeof(key_state) / sizeof(key_state[0]);
-  //SDL_PumpEvents();
   return key_state;
 }
