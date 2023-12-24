@@ -4,129 +4,125 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-uint32_t transcolor(SDL_Color *c){
-  return (c->a<<24)|(c->r<<16)|(c->g<<8)|c->b;
+static inline uint32_t translate_color(SDL_Color *color){
+  return (color->a << 24) | (color->r << 16) | (color->g << 8) | color->b;
 }
-int sss=0;
 void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect) {
   assert(dst && src);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
-  //assert(sss!=2);
-  int sx,sy,dx,dy;
-  int sw,sh,dw,dh;
-  if(srcrect){
-    sx=srcrect->x;
-    sy=srcrect->y;
-    sw=srcrect->w;
-    sh=srcrect->h;
-  }
-  else{
-    sx=0;
-    sy=0;
-    sw=src->w;
-    sh=src->h;
-  }
-  if(dstrect){
-    dx=dstrect->x;
-    dy=dstrect->y;
-    dw=dstrect->w;
-    dh=dstrect->h;
-  }
-  else{
-    dx=0;
-    dy=0;
-    dw=dst->w;
-    dh=dst->h;
-  }
-  if(src->format->BitsPerPixel==32){
-    for(int i=0;i<sh;i++){
-      for(int j=0;j<sw*4;j++){
-        dst->pixels[((i+dy)*dst->w+dx)*4+j]=src->pixels[((i+sy)*src->w+sx)*4+j];
+
+  if (src->format->BitsPerPixel == 32){
+    uint32_t* src_pixels = (uint32_t*)src->pixels;
+    uint32_t* dst_pixels = (uint32_t*)dst->pixels;
+
+    int rect_w, rect_h, src_x, src_y, dst_x, dst_y;
+    if (srcrect){
+      rect_w = srcrect->w; rect_h = srcrect->h;
+      src_x = srcrect->x; src_y = srcrect->y; 
+    }else {
+      rect_w = src->w; rect_h = src->h;
+      src_x = 0; src_y = 0;
+    }
+    if (dstrect){
+      dst_x = dstrect->x, dst_y = dstrect->y;
+    }else {
+      dst_x = 0; dst_y = 0;
+    }
+    
+    for (int i = 0; i < rect_h; ++i){
+      for (int j = 0; j < rect_w; ++j){
+        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
       }
     }
-  }
-  else if(src->format->BitsPerPixel==8){
-    for(int i=0;i<sh;i++){
-      for(int j=0;j<sw;j++){
-        dst->pixels[(i+dy)*dst->w+dx+j]=src->pixels[(i+sy)*src->w+sx+j];   
+  }else if (src->format->BitsPerPixel == 8){
+    uint8_t* src_pixels = (uint8_t*)src->pixels;
+    uint8_t* dst_pixels = (uint8_t*)dst->pixels;
+
+    int rect_w, rect_h, src_x, src_y, dst_x, dst_y;
+    if (srcrect){
+      rect_w = srcrect->w; rect_h = srcrect->h;
+      src_x = srcrect->x; src_y = srcrect->y; 
+    }else {
+      rect_w = src->w; rect_h = src->h;
+      src_x = 0; src_y = 0;
+    }
+    if (dstrect){
+      dst_x = dstrect->x, dst_y = dstrect->y;
+    }else {
+      dst_x = 0; dst_y = 0;
+    }
+    
+    for (int i = 0; i < rect_h; ++i){
+      for (int j = 0; j < rect_w; ++j){
+        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
       }
     }
+  }else {
+    assert(0);
   }
+  
 }
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
-  //assert(sss!=2);
-  if(dstrect==NULL){
-    if(dst->format->BitsPerPixel==32){
-      for(int i=0;i<dst->h;i++){
-        for(int j=0;j<dst->w*4;j+=4){
-          dst->pixels[i*dst->w*4+j]=(uint8_t)color;
-	  dst->pixels[i*dst->w*4+j+1]=(uint8_t)(color>>8);
-	  dst->pixels[i*dst->w*4+j+2]=(uint8_t)(color>>16);
-	  dst->pixels[i*dst->w*4+j+3]=(uint8_t)(color>>24);
-	  //assert(dst->pixels[i*dst->w*4+j]!=color);
-        }
-      }  
+    uint32_t * base = (uint32_t *)dst->pixels;
+    if (dstrect == NULL) {
+        for (int i = 0; i < dst->w * dst->h; ++i) base[i] = color;
+        return;
     }
-    else if(dst->format->BitsPerPixel==8){
-      for(int i=0;i<dst->h;i++){
-        for(int j=0;j<dst->w;j++){
-	  dst->format->palette->colors[dst->pixels[i*dst->w+j]].val=color;
-	}
-      }
+    
+    int rect_x = dstrect->x;
+    int rect_y = dstrect->y;
+    int rect_w = dstrect->w < (dst->w - dstrect->x) ? dstrect->w : (dst->w - dstrect->x);
+    int rect_h = dstrect->h < (dst->h - dstrect->y) ? dstrect->h : (dst->h - dstrect->y);
+
+    for (int i = 0; i < rect_h; ++i) {
+        for (int j = 0; j < rect_w; ++j) {
+            base[(rect_y + i) * dst->w + rect_x + j] = color;
+        }
     }
     return;
-  }
-  if(dst->format->BitsPerPixel==32){
-    for(int i=0;i<dstrect->h;i++){
-      for(int j=0;j<dstrect->w*4;j+=4){
-        dst->pixels[((i+dstrect->y)*dst->w+dstrect->x)*4+j]=(uint8_t)color;
-	dst->pixels[((i+dstrect->y)*dst->w+dstrect->x)*4+j+1]=(uint8_t)(color>>8);
-	dst->pixels[((i+dstrect->y)*dst->w+dstrect->x)*4+j+2]=(uint8_t)(color>>16);
-	dst->pixels[((i+dstrect->y)*dst->w+dstrect->x)*4+j+3]=(uint8_t)(color>>24);
-	//assert(dst->pixels[((i+dstrect->y)*dst->w+dstrect->x)*4+j]!=color);
-      }
-    } 
-  }
-  else if(dst->format->BitsPerPixel==8){
-    for(int i=0;i<dstrect->h;i++){
-      for(int j=0;j<dstrect->w;j++){
-        dst->format->palette->colors[dst->pixels[(i+dstrect->y)*dst->w+dstrect->x+j]].val=color;  
-      }
-    }
-  }
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
-//	assert(sizeof(uint8_t)*4!=sizeof(uint32_t));
-  if(w==0&&h==0){
-    w=s->w;
-    h=s->h;
-  }
-  uint16_t pitch=s->pitch;
-  uint32_t *pixels=malloc(w*h*4);
-  if(s->format->BitsPerPixel==8){
-    for(int i=0;i<h;i++){
-      for(int j=0;j<w;j++){
-        pixels[i*w+j]=transcolor(&s->format->palette->colors[s->pixels[(i+y)*s->w+x+j]]);
-      }
+  if (s->format->BitsPerPixel == 32){
+    if (w == 0 && h == 0 && x ==0 && y == 0){
+      //printf("%d %d\n", s->w, s->h);
+      NDL_DrawRect((uint32_t *)s->pixels, 0, 0, s->w, s->h);
+      return ;
     }
-  }
-  else if(s->format->BitsPerPixel==32){
-    for(int i=0;i<h;i++){
-      for(int j=0;j<w;j++){
-        pixels[i*w+j]=((uint32_t)s->pixels[((i+y)*s->w+x+j)*4+3]<<24)|((uint32_t)s->pixels[((i+y)*s->w+x+j)*4+2]<<16)|((uint32_t)s->pixels[((i+y)*s->w+x+j)*4+1]<<8)|s->pixels[((i+y)*s->w+x+j)*4];
-      }
+    
+    uint32_t *pixels = malloc(w * h * sizeof(uint32_t));
+    assert(pixels);
+    uint32_t *src = (uint32_t *)s->pixels;
+    for (int i = 0; i < h; ++i){
+      memcpy(&pixels[i * w], &src[(y + i) * s->w + x], sizeof(uint32_t) * w);
     }
-  }
-  NDL_OpenCanvas(&s->w, &s->h);
-  //printf("x is %d, y is %d, w is %d, h is %d\n",x,y,w,h);
-  NDL_DrawRect(pixels, x, y, w, h);
-  free(pixels);
-  sss++;
-}
+    NDL_DrawRect(pixels, x, y, w, h);
 
+    free(pixels);
+  }else if(s->format->BitsPerPixel == 8){
+    if (w == 0 && h == 0 && x ==0 && y == 0){
+      w = s->w; h = s->h;
+      x = 0;    y = 0;
+    }
+
+    uint32_t *pixels = malloc(w * h * sizeof(uint32_t));
+    assert(pixels);
+    uint8_t *src = (uint8_t *)s->pixels;
+
+    for (int i = 0; i < h; ++i){
+      for (int j = 0; j < w; ++j){
+        pixels[i * w + j] = translate_color(&s->format->palette->colors[src[(y + i) * s->w + x + j]]);
+        //pixels[i * w + j] = s->format->palette->colors[src[(y + i) * s->w + x + j]].val;
+      }
+    }
+    NDL_DrawRect(pixels, x, y, w, h);
+
+    free(pixels);
+  }else {
+    assert(0);
+  }
+}
 // APIs below are already implemented.
 
 static inline int maskToShift(uint32_t mask) {
