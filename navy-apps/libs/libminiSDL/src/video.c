@@ -51,23 +51,41 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
 
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
-    uint32_t * base = (uint32_t *)dst->pixels;
-    if (dstrect == NULL) {
-        for (int i = 0; i < dst->w * dst->h; ++i) base[i] = color;
-        return;
-    }
-    
-    int rect_x = dstrect->x;
-    int rect_y = dstrect->y;
-    int rect_w = dstrect->w < (dst->w - dstrect->x) ? dstrect->w : (dst->w - dstrect->x);
-    int rect_h = dstrect->h < (dst->h - dstrect->y) ? dstrect->h : (dst->h - dstrect->y);
+  // 确定要填充的区域
+  int x, y, w, h;
+  if (dstrect) {
+    // 确保矩形区域不超出曲面的边界
+    x = dstrect->x;
+    y = dstrect->y;
+    w = (x + dstrect->w > dst->w) ? dst->w - x : dstrect->w;
+    h = (y + dstrect->h > dst->h) ? dst->h - y : dstrect->h;
+  } else {
+    x = y = 0;
+    w = dst->w;
+    h = dst->h;
+  }
 
-    for (int i = 0; i < rect_h; ++i) {
-        for (int j = 0; j < rect_w; ++j) {
-            base[(rect_y + i) * dst->w + rect_x + j] = color;
-        }
+  // 计算开始填充的地址
+  uint8_t *pixel = (uint8_t*)dst->pixels + y * dst->pitch + x * dst->format->BytesPerPixel;
+
+  // 根据像素的字节数进行行填充
+  for (int i = 0; i < h; ++i) {
+    // 判断格式并做填充
+    if (dst->format->BytesPerPixel == 4) {
+      // 32位即每个像素4字节
+      uint32_t* row_pixel = (uint32_t*) (pixel + i * dst->pitch);
+      for (int j = 0; j < w; ++j) {
+        row_pixel[j] = color;
+      }
+    } else if (dst->format->BytesPerPixel == 1) {
+      // 8位即每个像素1字节（此部分为假设代码）
+      // 实际上此处应该依赖于调色板来选择颜色，但是在本例中我们做简化处理
+      memset(pixel + i * dst->pitch, (uint8_t)color, w);
+    } else {
+      // 如果有其他像素大小/格式类可以添加其他的处理逻辑
+      assert(0); // 不支持的像素格式
     }
-    return;
+  }
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
