@@ -182,49 +182,32 @@ word_t expr(const char *e, bool *success) {
 }
 
 #define STACK_SIZE 1024
-char stack[STACK_SIZE];
-bool check_parentheses(int p, int q, int *position) {
-  // Let's use an array to simulate the stack. We don't use dynamic memory allocation here.
-  
-  *position = -1;  // Initialize the position as invalid (-1).
-  int top = -1;    // Stack pointer, -1 indicates empty stack.
-
-  // Iterate over the tokens from index p to q inclusive.
-  for (int index = p; index <= q; index++) {
-    if (tokens[index].type == '(') {
-      if (top == STACK_SIZE - 1) {
-          // Stack is full. This would be overflow in a real stack
-          // Set position to current index for debugging, and return false.
-          *position = index;
-          return false; 
-      }
-      // Push '(': Increment stack pointer and then insert.
+bool check_parentheses(int p, int q, int *position){
+  //char *stack = calloc(STACK_SIZE, sizeof(char));
+  char stack[STACK_SIZE];
+  *position = -1;
+  int top = -1, index = p;
+  bool is_parentheses = tokens[p].type == '(';
+  while (index <= q){
+    if (tokens[index].type == '('){
       stack[++top] = '(';
-    } else if (tokens[index].type == ')') {
-      if (top == -1) {
-        // Stack underflow, there is a ')' without a matching '('.
-        *position = index;  // Set position to current index.
+    }else if (tokens[index].type == ')'){
+      if (top < 0 || stack[top] != '('){
+        *position = p;
         return false;
+      }else {
+        top--;
       }
-      // Pop '(': Decrement the stack pointer.
-      top--;
     }
+    if (index < q)
+      is_parentheses = (top >= 0) && is_parentheses; // 永远都该有一个前括号
+    index++;
   }
-
-  // If we reach here and the stack is not empty, there are unmatched '('.
-  if (top != -1){
-    // Find the last unmatched '('. This is more helpful than just setting to p.
-    for (int index = q; index >= p; index--) {
-      if (tokens[index].type == '(') {
-        *position = index;
-        break;
-      }
-    }
+  if (top != -1){ //栈空
+    *position = p;
     return false;
   }
-
-  // If the stack is empty, and we have seen at least one '(', is_parentheses is true.
-  return *position != 0;
+  return is_parentheses;
 }
 
 #define PRIOROTY_BASE 16
