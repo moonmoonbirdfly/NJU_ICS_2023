@@ -237,7 +237,7 @@ int prio(char type){
   }
 }
 
-u_int32_t eval(int p, int q, bool *success, int *position) {
+uint32_t eval(int p, int q, bool *success, int *position) {
   if (p > q) {
     *success = false;
     return 0;
@@ -246,7 +246,7 @@ u_int32_t eval(int p, int q, bool *success, int *position) {
      * For now this token should be a number.
      * Return the value of the number.
      */
-    u_int32_t buffer = 0;
+    uint32_t buffer = 0;
     switch (tokens[p].type){
     case TK_HEX:
       sscanf(tokens[p].str, "%x", &buffer);
@@ -317,8 +317,8 @@ u_int32_t eval(int p, int q, bool *success, int *position) {
     }
 
     // IFDEF(CONFIG_DEBUG, Log("主运算符 %c", tokens[op].type));
-    u_int32_t val1 = eval(p, op - 1, success, position);
-    u_int32_t val2 = eval(op + 1, q, success, position);
+    uint32_t val1 = eval(p, op - 1, success, position);
+    uint32_t val2 = eval(op + 1, q, success, position);
     switch (tokens[op].type) {
       case '+': return val1 + val2;
       case '-': return val1 - val2;
