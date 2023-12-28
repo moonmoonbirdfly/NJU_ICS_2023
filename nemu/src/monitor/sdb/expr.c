@@ -27,7 +27,7 @@ uint8_t* guest_to_host(paddr_t paddr);
 // 这里定义了一些枚举常量，用于表示不同的标记类型
 enum {
   TK_NOTYPE = 0x41, TK_EQ, 
-  NUM, TK_HEX, TK_UEQ, REG, DEREF, MINUS
+  NUM, TK_HEX, TK_UEQ, REG, TK_DEREF, TK_MINUS
 };
 
 static struct rule {
@@ -120,10 +120,10 @@ static bool make_token(const char *e) {
               switch (rules[i].token_type)
               {
               case '*':
-                tokens[nr_token].type = DEREF;
+                tokens[nr_token].type = TK_DEREF;
                 break;
               case '-':
-                tokens[nr_token].type = MINUS;
+                tokens[nr_token].type = TK_MINUS;
                 break;
               }
             }else if (tokens[nr_token - 1].type == ')' 
@@ -277,11 +277,11 @@ u_int32_t eval(int p, int q, bool *success, int *position) {
     return buffer;
   }else if (q - p == 1 || check_parentheses(p + 1, q, position) == true){//长度为2的子表达式呈型于 -[NUM] *[NUM]
     switch (tokens[p].type) {
-    case DEREF:
+    case TK_DEREF:
       return *((uint32_t *)guest_to_host(eval(p + 1, q, success, position)));
       break;
     
-    case MINUS://取负
+    case TK_MINUS://取负
       return -eval(p + 1, q, success, position);
     default:
       assert(0);
