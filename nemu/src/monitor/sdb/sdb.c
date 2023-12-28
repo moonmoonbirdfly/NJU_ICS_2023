@@ -42,13 +42,13 @@ static int cmd_si(char *args){
 
 static int cmd_info(char *args){
   if (args == NULL){
-    printf("info指令 缺少参数\n");
+    printf("info lack argvs\n");
   }else if (strcmp(args, "r") == 0){
     isa_reg_display();
   }else if (strcmp(args, "w") == 0){
     //watchpoint_display();
   }else {
-    printf("未知的参数 [%s] \n", args);
+    printf("unknown command[%s] \n", args);
   }
 
   return 0;
@@ -70,7 +70,7 @@ static int cmd_x(char *args){
 
   for (int i = 0; i < n; ++i){
     if (i % 4 == 0){
-      printf ("\n\e[1;36m%#x: \e[0m\t", base + i * 4);
+     // printf ("\n\ %#x: \t", base + i * 4);
     }
     for (int j = 0; j < 4; ++j){
       uint8_t* pos = guest_to_host(base + i * 4 + j);
@@ -88,7 +88,7 @@ static int cmd_p(char *args){
   bool success;
   uint32_t v = expr(args, &success);
   if (success)
-    printf("%s = \e[1;36m%u\e[0m\n", args, v);
+    printf("%s = %u \n", args, v);
   return 0;
 }
 
@@ -125,7 +125,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si", "si [N] Continue the execution in N steps", cmd_si},
-  { "info", "info r 打印寄存器状态, info w 打印监视点信息", cmd_info},
+  { "info", "info r r", cmd_info},
   { "x", "x N Scan the memory from EXPR by N bytes", cmd_x},
   { "p", "p EXPR find expr", cmd_p},
   { "w", "w EXPR stop ", cmd_w},
