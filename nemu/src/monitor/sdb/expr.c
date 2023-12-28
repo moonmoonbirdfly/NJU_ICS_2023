@@ -182,32 +182,46 @@ word_t expr(const char *e, bool *success) {
 }
 
 #define STACK_SIZE 1024
-bool check_parentheses(int p, int q, int *position){
-  //char *stack = calloc(STACK_SIZE, sizeof(char));
-  char stack[STACK_SIZE];
-  *position = -1;
-  int top = -1, index = p;
-  bool is_parentheses = tokens[p].type == '(';
-  while (index <= q){
-    if (tokens[index].type == '('){
-      stack[++top] = '(';
-    }else if (tokens[index].type == ')'){
-      if (top < 0 || stack[top] != '('){
-        *position = p;
-        return false;
-      }else {
-        top--;
+bool check_parentheses(int p, int q, int *position) {
+  // Keep track of the balance of the parentheses
+  int balance = 0;
+  bool well_formed = true;
+
+  // This will check if the expression is entirely enclosed in parentheses
+  bool enclosed = (tokens[p].type == '(') && (tokens[q].type == ')');
+
+  for (int i = p; i <= q; i++) {
+    if (tokens[i].type == '(') {
+      balance++;
+      // Make sure that if it is enclosed, we don't count the outermost parentheses
+      if (enclosed && ((i == p) || (i == q))) continue;
+    } else if (tokens[i].type == ')') {
+      balance--;
+      // Similar to before, don't count the outermost closing parentheses if it is enclosed
+      if (enclosed && ((i == p) || (i == q))) continue;
+      // If the balance is negative, there's a mismatch
+      if (balance < 0) {
+        well_formed = false;
+        *position = i;
+        break;
       }
     }
-    if (index < q)
-      is_parentheses = (top >= 0) && is_parentheses; // 永远都该有一个前括号
-    index++;
   }
-  if (top != -1){ //栈空
-    *position = p;
-    return false;
+
+  // If the balance is not zero at the end, there's a mismatch
+  if (balance != 0) {
+    well_formed = false;
+    *position = p; // Not the exact position of the error, but indicative
   }
-  return is_parentheses;
+
+  // Check if all parentheses are matched and positioned correctly
+  if (well_formed) {
+    // If it is not enclosed, we want balance to be zero, meaning all parentheses matched up.
+    // If it is enclosed, we want balance to be two, accounting for the outer parentheses.
+    return enclosed ? (balance == 2) : (balance == 0);
+  }
+
+  return false;
 }
 
 #define PRIOROTY_BASE 16
