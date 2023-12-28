@@ -20,40 +20,39 @@
  */
 #include <regex.h>  // 导入正则表达式库，用于对输入的表达式进行匹配和解析
 #include <memory/vaddr.h>  // 导入虚拟地址库，对程序内存进行操作
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+uint8_t* guest_to_host(paddr_t paddr);
 // 这里定义了一些枚举常量，用于表示不同的标记类型
 enum {
-  TK_NOTYPE = 256, TK_EQ,TK_NEG,
-  TK_NUM, // 10 & 16
-  TK_HEX,
-  TK_REG,
-  TK_VAR,
+  TK_NOTYPE = 0x41, TK_EQ, 
+  NUM, HEX, TK_UEQ, REG, DEREF, MINUS
 };
 
 static struct rule {
   const char *regex;
   int token_type;
-} rules[] = {
-
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
-
-  {" +", TK_NOTYPE},    // spaces
+} rules[] = {//这里面不要有字符的type，因为标识从A开始
+  {"0x[0-9A-Fa-f]+", HEX}, //16进制数字
+  {"\\$[0-9a-z]+", REG},//寄存器
+  {"[0-9]+",NUM},       // 数字
+  {"\\(", '('},         // 左括号
+  {"\\)", ')'},         // 右括号
   {"\\+", '+'},         // plus
-  {"-", '-'},
-  {"\\*", '*'},
-  {"/", '/'},
+  {"\\-", '-'},         // sub
+  {"\\*", '*'},         // mul
+  {"\\/", '/'},         // divide
+  {" +", TK_NOTYPE},    // spaces
   {"==", TK_EQ},        // equal
-  {"\\(", '('},
-  {"\\)", ')'},
-  {"0x[A-Fa-f0-9]+", TK_HEX}, 
-  {"[0-9]+", TK_NUM}, // TODO: non-capture notation (?:pattern) makes compilation failed
-  {"\\$\\w+", TK_REG},
-  {"[A-Za-z_]\\w*", TK_VAR},
+  {"!=", TK_UEQ},
+  {"&&", '&'},
+  {"\\|\\|", '|'}
 };
 
 #define NR_REGEX ARRLEN(rules)
+
+
 
 static regex_t re[NR_REGEX] = {};
 
@@ -64,13 +63,11 @@ void init_regex() {
   int i;
   char error_msg[128];
   int ret;
+  
+  assert(ARRLEN(rules) < 26);
 
-  // 遍历所有的正则表达式规则
   for (i = 0; i < NR_REGEX; i ++) {
-    // 编译正则表达式，将文本形式的正则表达式转换为可以用于匹配的结构
-    // 如果成功，ret为0，如果失败则为非零值
     ret = regcomp(&re[i], rules[i].regex, REG_EXTENDED);
-    // 如果编译失败，将错误信息存入error_msg并报错
     if (ret != 0) {
       regerror(ret, &re[i], error_msg, 128);
       panic("regex compilation failed: %s\n%s", error_msg, rules[i].regex);
@@ -78,222 +75,261 @@ void init_regex() {
   }
 }
 
-
-// 定义一个词法分析单元结构体
 typedef struct token {
-  int type;         // 标记类型
-  char str[32];     // 标记字符串
+  int type;
+  char str[32];
 } Token;
 
+static Token tokens[2048] __attribute__((used)) = {};
+static int nr_token __attribute__((used))  = 0;
 
-static Token tokens[32] __attribute__((used)) = {};  // 存储标记的数组
-static int nr_token __attribute__((used))  = 0;      // 记录标记数量的变量
+int prio(char type);
 
+static bool make_token(const char *e) {
+  int position = 0;
+  int i;
+  regmatch_t pmatch;
 
-bool check_parentheses(int p, int q){
-	int a;
-	int j = 0, k = 0;
-	if (tokens[p].type == '(' || tokens[q].type == ')'){
-		for (a = p; a <= q; a++){
-			if (tokens[a].type == '('){
-				j++;
-			}
-			if (tokens[a].type == ')'){
-				k++;
-			}
-			if (a != q && j == k){
-				return false;
-			}
-		}
-		if (j == k){
-				return true;
-			} else {
-				return false;
-			}
-	}
-	return false;
-}
+  nr_token = 0;
 
-int find_major(int p, int q) {
-  int ret = -1, par = 0, op_type = 0;
-  for (int i = p; i <= q; i++) {
-      if (i != p && tokens[i].type == '-' && 
-          !(tokens[i-1].type == TK_NUM || tokens[i-1].type == TK_HEX || 
-            tokens[i-1].type == ')')) {
-          tokens[i].type = TK_NEG;
-      }
-  }
-  
-  for (int i = p; i <= q; i++) {
-    if (tokens[i].type == TK_NUM || tokens[i].type == TK_HEX) {
-      continue;
-    }
-    if (tokens[i].type == '(') {
-      par++;
-    } else if (tokens[i].type == ')') {
-      if (par == 0) {
-        return -1;
-      }
-      par--;
-    } else if (par > 0) {
-      continue;
-    } else {
-      int tmp_type = 0;
-      switch (tokens[i].type) {
-      case '*': case '/': tmp_type = 1; break;
-      case '+': case '-': tmp_type = 2; break;
-      case TK_NEG: tmp_type = 3; break;
-      default: 
-    printf("Unexpected token type: %d\n",tokens[i].type);
-    assert(0);
-	break;
-      }
-      if (tmp_type >= op_type) {
-        op_type = tmp_type;
-        ret = i;
-      }
-    }
-  }
-  if (par != 0) return -1;
-  return ret;
-}
-
-
-word_t eval(int p, int q, bool *ok) {
-  *ok = true;
-  if (p > q) {
-    *ok = false;
-    return 0;
-  } else if (p == q) {
-    switch (tokens[p].type) {
-      case TK_NUM:
-        return strtol(tokens[p].str, NULL, 10);   
-      case TK_HEX:
-        return strtol(tokens[p].str, NULL, 16);
-      case TK_NEG:
-        return -strtol(tokens[p].str+1, NULL, 10);  // When token is negative number
-      default:
-        *ok = false;
-        return 0;
-    }
-    word_t ret = strtol(tokens[p].str, NULL, 10);
-    return ret;
-  } else if (check_parentheses(p, q)) {
-    return eval(p+1, q-1, ok);
-  } else {    
-    int major = find_major(p, q);
-    if (major < 0) {
-      *ok = false;
-      return 0;
-    }
-
-    word_t val1 = eval(p, major-1, ok);
-    if (!*ok) return 0;
-    word_t val2 = eval(major+1, q, ok);
-    if (!*ok) return 0;
-    
-    switch(tokens[major].type) {
-     case TK_NEG: return -eval(p, major, ok);
-      case '+': return val1 + val2;
-      case '-': return val1 - val2;
-      case '*': return val1 * val2;
-      case '/': if (val2 == 0) {
-        *ok = false;
-        return 0;
-      } 
-      return (sword_t)val1 / (sword_t)val2; // e.g. -1/2, may not pass the expr test
-      default: assert(0);
-    }
-  }
-}
-
-
-
-
-// 定义一个函数，输入参数是一个字符指针，返回一个布尔值
-// 对输入的字符串（例如，表达式或命令）进行令牌（token）处理的函数
-static bool make_token(char *e) {
-  int position = 0;   // 初始化当前读取的字符的位置
-  int i;              // 用于循环的变量
-  regmatch_t pmatch;  // 用于存放匹配的正则表达式结果的结构体
-
-  nr_token = 0;       // 初始化令牌的数量
-  while (e[position] != '\0') {   // 当没有读取到字符串的末尾时，继续处理
-    // 尝试所有的规则
+  while (e[position] != '\0') {
+    /* Try all rules one by one. */
     for (i = 0; i < NR_REGEX; i ++) {
-      // 对当前规则的正则表达式进行含义和匹配
-      int reg_res = regexec(&re[i], e + position, 1, &pmatch, 0);
-      // 如果匹配成功且匹配的开始位置在字符串的开始处
-      if (reg_res == 0 && pmatch.rm_so == 0) {
-        char *substr_start = e + position;  // 指向匹配字符串的开始处
-        int substr_len = pmatch.rm_eo;     // 匹配的字符串的长度
-
-        // 记录匹配的字符串之后的位置
-        position += substr_len;
-
-        // 如果匹配的是一个空字符（没有类型），则跳过这个字符
-        if (rules[i].token_type == TK_NOTYPE) break;
-
-        // 在令牌列表中存储匹配到的令牌的类型
-        tokens[nr_token].type = rules[i].token_type;
-
-        // 直接复制类型为数字、寄存器、变量的值
-        switch (rules[i].token_type) {
-          case TK_NUM:
-          case TK_REG:
-          case TK_VAR:
-            strncpy(tokens[nr_token].str, substr_start, substr_len);
-            tokens[nr_token].str[substr_len] = '\0';
-            // todo: 处理溢出（令牌超过32B的情况）
-          case TK_HEX:
-            strncpy(tokens[nr_token].str, substr_start, substr_len);
-            tokens[nr_token].str[substr_len] = '\0';
+      if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
+        const char *substr_start = e + position;
+        int substr_len = pmatch.rm_eo;
+        
+        if (substr_len > 32){
+          assert(0);
         }
-        // 递增记数器
-        nr_token++;
 
-        // 跳出此次循环
+        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+            i, rules[i].regex, position, substr_len, substr_len, substr_start);
+
+        position += substr_len;
+        
+        /* TODO: Now a new token is recognized with rules[i]. Add codes
+         * to record the token in the array `tokens'. For certain types
+         * of tokens, some extra actions should be performed.
+         */
+
+        switch (rules[i].token_type) {
+          case '*':
+          case '-':
+            if (nr_token == 0 || tokens[nr_token - 1].type == '(' || prio(tokens[nr_token - 1].type) > 0){
+              switch (rules[i].token_type)
+              {
+              case '*':
+                tokens[nr_token].type = DEREF;
+                break;
+              case '-':
+                tokens[nr_token].type = MINUS;
+                break;
+              }
+            }else if (tokens[nr_token - 1].type == ')' 
+              || tokens[nr_token - 1].type == NUM || tokens[nr_token - 1].type == HEX
+              || tokens[nr_token - 1].type == REG){
+              tokens[nr_token].type = rules[i].token_type;
+            }else {
+              IFDEF(CONFIG_DEBUG, Log("遇到了%#x作为前缀", tokens[i - 1].type));
+              assert(0);
+            }
+            nr_token++;
+            break;
+
+          case TK_NOTYPE:
+            break;
+          case NUM:
+          case HEX:
+          case REG:
+            memcpy(tokens[nr_token].str, e + position - substr_len, (substr_len) * sizeof(char));
+            tokens[nr_token].str[substr_len] = '\0';
+            // IFDEF(CONFIG_DEBUG, Log("[DEBUG ]读入了一个数字%s", tokens[nr_token].str));
+          default: 
+            tokens[nr_token].type = rules[i].token_type;
+            nr_token++;
+            break;
+        }
+
         break;
       }
     }
 
-    // 如果所有规则都没有匹配
     if (i == NR_REGEX) {
-      // 如果在字符串的开始处出现'-'字符，视为一元的负号
-      if(position == 0 && e[position] == '-') {
-        tokens[nr_token].type = TK_NEG;
-        tokens[nr_token].str[0] = '-';
-        tokens[nr_token].str[1] = '\0';
-        nr_token++;
-        position++;
-      } else {
-        // 在其他位置没有找到匹配，返回错误
-        printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
-        return false;
-      }   
+      printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
+      return false;
     }
   }
-  return false;
+
+  return true;
 }
 
+word_t eval(int p, int q, bool *success, int *position);
 
-
-
-
-
-// 函数 'expr' 接收一个字符指针 'e' 和一个 bool 指针 'success' 作为输入
-// 'e' 可能是一个运算表达式的字符串形式，例如 "2+3*4"
-// 'success' 用于让该函数可以将运算成功与否的信息传回调用它的函数
-word_t expr(char *e, bool *success) {
-  
-  // 'make_token' 函数可能是用于将输入的表达式字符串 'e' 转换为一种内部表示（如标记序列）
-  // 如果转换失败（例如，输入不是一个有效的表达式），'make_token' 将返回 false
+word_t expr(const char *e, bool *success) {
   if (!make_token(e)) {
-    // 如果'tokenise'返回false，则在'*success'中存放false（表示解析失败），并返回0作为函数结果
     *success = false;
     return 0;
   }
 
-  return eval(0, nr_token-1, success);;
+  *success = true;
+  int position = 0;
+  int ans = eval(0, nr_token - 1, success, &position);
+  if (!*success){
+    printf("some problem happens at position %d\n%s\n%*.s^\n", position, e, position, "");
+  }
+  return ans;
 }
 
+#define STACK_SIZE 1024
+bool check_parentheses(int p, int q, int *position){
+  //char *stack = calloc(STACK_SIZE, sizeof(char));
+  char stack[STACK_SIZE];
+  *position = -1;
+  int top = -1, index = p;
+  bool is_parentheses = tokens[p].type == '(';
+  while (index <= q){
+    if (tokens[index].type == '('){
+      stack[++top] = '(';
+    }else if (tokens[index].type == ')'){
+      if (top < 0 || stack[top] != '('){
+        *position = p;
+        return false;
+      }else {
+        top--;
+      }
+    }
+    if (index < q)
+      is_parentheses = (top >= 0) && is_parentheses; // 永远都该有一个前括号
+    index++;
+  }
+  if (top != -1){ //栈空
+    *position = p;
+    return false;
+  }
+  return is_parentheses;
+}
+
+#define PRIOROTY_BASE 16
+
+int prio(char type){
+  switch (type) {
+  case '|':
+    return PRIOROTY_BASE + 0;
+
+  case '&':
+    return PRIOROTY_BASE + 1;
+
+  case TK_EQ:
+  case TK_UEQ:
+    return PRIOROTY_BASE + 2;
+
+  case '+':
+  case '-':
+    return PRIOROTY_BASE + 3;
+  
+  case '*':
+  case '/':
+    return PRIOROTY_BASE + 4;
+
+  default:
+    return -1;
+  }
+}
+
+u_int32_t eval(int p, int q, bool *success, int *position) {
+  if (p > q) {
+    *success = false;
+    return 0;
+  } else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+    u_int32_t buffer = 0;
+    switch (tokens[p].type){
+    case HEX:
+      sscanf(tokens[p].str, "%x", &buffer);
+      break;
+    
+    case NUM:
+      sscanf(tokens[p].str, "%u", &buffer);
+      break;
+
+    case REG:
+      if (strcmp(tokens[p].str, "$pc") == 0){
+        buffer = cpu.pc;
+        *success = true;
+      }else {
+        buffer = isa_reg_str2val(tokens[p].str, success);
+      }
+
+      if (!*success){
+        *position = p;
+        return 0;
+      }
+      break;
+
+    default:
+      assert(0);
+    }
+    // IFDEF(CONFIG_DEBUG, Log("读取数据 %d %s %x", buffer, tokens[p].str, tokens[p].type));
+    return buffer;
+  }else if (q - p == 1 || check_parentheses(p + 1, q, position) == true){//长度为2的子表达式呈型于 -[NUM] *[NUM]
+    switch (tokens[p].type) {
+    case DEREF:
+      return *((uint32_t *)guest_to_host(eval(p + 1, q, success, position)));
+      break;
+    
+    case MINUS://取负
+      return -eval(p + 1, q, success, position);
+    default:
+      assert(0);
+    }
+  } else if (check_parentheses(p, q, position) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    // IFDEF(CONFIG_DEBUG, Log("解括号"));
+    return eval(p + 1, q - 1, success, position);
+  } else {
+    // IFDEF(CONFIG_DEBUG, Log("计算"));
+    if (*position != -1){
+      *success = false;
+      return 0;
+    }
+    int op = -1, level = -1;
+    for (int i = p; i <= q; ++i){
+      if (tokens[i].type == '('){
+        level++;
+      } else if (tokens[i].type == ')'){
+        level--;// 不再检查合法性，一定合法
+      } else if (level == -1 && prio(tokens[i].type) >= 0){//说明层次不在括号里且是运算符
+        if (op == -1 || prio(tokens[i].type) <= prio(tokens[op].type)){// 寻找主运算符
+          op = i;
+        }
+      }
+    }
+    if (op == -1){
+      *success = false;
+      *position = 0;
+      return 0;
+    }
+
+    // IFDEF(CONFIG_DEBUG, Log("主运算符 %c", tokens[op].type));
+    u_int32_t val1 = eval(p, op - 1, success, position);
+    u_int32_t val2 = eval(op + 1, q, success, position);
+    switch (tokens[op].type) {
+      case '+': return val1 + val2;
+      case '-': return val1 - val2;
+      case '*': return val1 * val2;
+      case '/': return val1 / val2;
+      case TK_EQ: return val1 == val2;
+      case TK_UEQ: return val1 != val2;
+      case '|': return val1 || val2;
+      case '&': return val1 && val2;
+      default: assert(0);
+    }
+  }
+  return 0;
+}
