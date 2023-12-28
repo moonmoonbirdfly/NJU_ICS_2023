@@ -182,51 +182,33 @@ word_t expr(const char *e, bool *success) {
 }
 
 #define STACK_SIZE 1024
-bool check_parentheses(int p, int q, int *position) {
-  int parentheses_level = 0;
-  bool may_be_surrounded_by_parentheses = true;
-
-  // Initial check for immediate enclosure by parentheses
-  if (tokens[p].type != '(' || tokens[q].type != ')') {
-    may_be_surrounded_by_parentheses = false;
-  }
-
-  for (int i = p; i <= q; i++) {
-    if (tokens[i].type == '(') {
-      parentheses_level++; // Increase level when we find an opening parenthesis
-      if (i != p) {
-        may_be_surrounded_by_parentheses = false; // Found an opening parenthesis that's not at the start
-      }
-    } else if (tokens[i].type == ')') {
-      if (parentheses_level == 0) {
-        // Mismatch: more closing parentheses than opening
-        *position = i;
+bool check_parentheses(int p, int q, int *position){
+  //char *stack = calloc(STACK_SIZE, sizeof(char));
+  char stack[STACK_SIZE];
+  *position = -1;
+  int top = -1, index = p;
+  bool is_parentheses = tokens[p].type == '(';
+  while (index <= q){
+    if (tokens[index].type == '('){
+      stack[++top] = '(';
+    }else if (tokens[index].type == ')'){
+      if (top < 0 || stack[top] != '('){
+        *position = p;
         return false;
-      }
-      parentheses_level--; // Decrease level when we find a closing parenthesis
-      if (i != q && parentheses_level == 0) {
-        may_be_surrounded_by_parentheses = false; // Found a closing parenthesis that's not at the end
+      }else {
+        top--;
       }
     }
+    if (index < q)
+      is_parentheses = (top >= 0) && is_parentheses; // 永远都该有一个前括号
+    index++;
   }
-  
-  // Check if parentheses are balanced
-  if (parentheses_level != 0) {
-    *position = p; // The position of the error is not exact, could be improved
+  if (top != -1){ //栈空
+    *position = p;
     return false;
   }
-  
-  // Check if the whole expression is correctly enclosed in parentheses
-  if (may_be_surrounded_by_parentheses) {
-    *position = p;
-    return true;
-  }
-
-  // Otherwise, the expression is not surrounded by a single parentheses pair
-  *position = -1;
-  return false;
+  return is_parentheses;
 }
-
 
 #define PRIOROTY_BASE 16
 
