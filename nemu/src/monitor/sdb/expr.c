@@ -27,14 +27,14 @@ uint8_t* guest_to_host(paddr_t paddr);
 // 这里定义了一些枚举常量，用于表示不同的标记类型
 enum {
   TK_NOTYPE = 0x41, TK_EQ, 
-  NUM, HEX, TK_UEQ, REG, DEREF, MINUS
+  NUM, TK_HEX, TK_UEQ, REG, DEREF, MINUS
 };
 
 static struct rule {
   const char *regex;
   int token_type;
 } rules[] = {//这里面不要有字符的type，因为标识从A开始
-  {"0x[0-9A-Fa-f]+", HEX}, //16进制数字
+  {"0x[0-9A-Fa-f]+", TK_HEX}, //16进制数字
   {"\\$[0-9a-z]+", REG},//寄存器
   {"[0-9]+",NUM},       // 数字
   {"\\(", '('},         // 左括号
@@ -127,7 +127,7 @@ static bool make_token(const char *e) {
                 break;
               }
             }else if (tokens[nr_token - 1].type == ')' 
-              || tokens[nr_token - 1].type == NUM || tokens[nr_token - 1].type == HEX
+              || tokens[nr_token - 1].type == NUM || tokens[nr_token - 1].type == TK_HEX
               || tokens[nr_token - 1].type == REG){
               tokens[nr_token].type = rules[i].token_type;
             }else {
@@ -140,7 +140,7 @@ static bool make_token(const char *e) {
           case TK_NOTYPE:
             break;
           case NUM:
-          case HEX:
+          case TK_HEX:
           case REG:
             memcpy(tokens[nr_token].str, e + position - substr_len, (substr_len) * sizeof(char));
             tokens[nr_token].str[substr_len] = '\0';
@@ -248,7 +248,7 @@ u_int32_t eval(int p, int q, bool *success, int *position) {
      */
     u_int32_t buffer = 0;
     switch (tokens[p].type){
-    case HEX:
+    case TK_HEX:
       sscanf(tokens[p].str, "%x", &buffer);
       break;
     
