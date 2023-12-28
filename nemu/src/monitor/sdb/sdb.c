@@ -1,171 +1,136 @@
-/***************************************************************************************
-* Copyright (c) 2014-2022 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
-
 #include <isa.h>
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <memory/paddr.h>
+#include <utils.h>
+
 #include "sdb.h"
-#include <memory/vaddr.h>
-//全局变量，表示是否为批处理模式。如果是批处理模式，程序可能会在没有用户交互的情况下运行一系列指令。默认是非批处理模式。
+
+
 static int is_batch_mode = false;
 
-//初始化正则表达式功能的函数声明。
 void init_regex();
-
-//初始化wp_pool功能的函数声明，wp_pool可能是工作进程池的意思，详细功能需要看实际代码。
 void init_wp_pool();
 
-/* 使用 readline 函数应用库从标准输入获取输入行. */
+/* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
-  //静态变量，用于存储在readline中读取的行。
   static char *line_read = NULL;
 
-  //如果非空，则释放上一次读取的行的内存。
   if (line_read) {
     free(line_read);
     line_read = NULL;
   }
 
-  //读取行，行起始标记是"(nemu) "。
   line_read = readline("(nemu) ");
 
-  //如果行读取成功且非空，则将该行添加到history中。
   if (line_read && *line_read) {
     add_history(line_read);
   }
 
-  //返回读取的行。
   return line_read;
 }
 
-//表示CPU执行命令 'c' 的函数，args表示参数。
-static int cmd_c(char *args) {
-  //CPU执行，参数设为-1可能表示执行全部或者无限制数量的指令。
-  cpu_exec(-1);
-  //返回0，表示达到预期结果。
-  return 0;
-}
-
-//表示CPU执行命令 'si' 的函数，args表示参数。
 static int cmd_si(char *args){
-  //声明一个变量作为执行的步数。
-  int step=0;
-  
-  //如果没有参数传入，则运行步数为1。
-  if(args==NULL) step=1;
-
-  //否则，使用sscanf将参数转为整数作为运行步数。
-  else sscanf(args,"%d",&step);
-  
-  //CPU执行，参数为步数。
-  cpu_exec(step);
-  
-  //返回0，表示达到预期结果。
+  int n = 1;
+  if (args != NULL){
+    sscanf(args, "%d", &n);
+  }
+  cpu_exec(n);
   return 0;
 }
 
-//表示命令 'q' 的函数，args表示参数，可能用于退出程序。
-static int cmd_q(char *args) {
-  //设置nemu状态为QUIT，可能是表示程序被退出的状态。
-  nemu_state.state = NEMU_QUIT;
+static int cmd_info(char *args){
+  if (args == NULL){
+    printf("info指令 缺少参数\n");
+  }else if (strcmp(args, "r") == 0){
+    isa_reg_display();
+  }else if (strcmp(args, "w") == 0){
+    //watchpoint_display();
+  }else {
+    printf("未知的参数 [%s] \n", args);
+  }
 
-  //返回-1，可能表示一个错误或异常状态。
+  return 0;
+}
+
+static int cmd_x(char *args){
+  char *arg = strtok(NULL, " ");
+  int n = -1;
+  bool success = true;
+  paddr_t base = 0x80000000; 
+  sscanf(arg, "%d", &n); //对于n不支持表达式，只支持常量。
+  arg = args + strlen(arg) + 1;
+  //sscanf(arg, "%i", &base);
+  base = expr(arg, &success);
+  if (!success) {
+    return 0;
+  }
+  
+
+  for (int i = 0; i < n; ++i){
+    if (i % 4 == 0){
+      printf ("\n\e[1;36m%#x: \e[0m\t", base + i * 4);
+    }
+    for (int j = 0; j < 4; ++j){
+      uint8_t* pos = guest_to_host(base + i * 4 + j);
+      printf("%.2x ", *pos);
+    }
+    printf("\t");
+  }
+  printf("\n");
+  return 0;
+}
+
+
+
+static int cmd_p(char *args){
+  bool success;
+  uint32_t v = expr(args, &success);
+  if (success)
+    printf("%s = \e[1;36m%u\e[0m\n", args, v);
+  return 0;
+}
+
+static int cmd_w(char *args){
+  
+  return 0;
+}
+
+static int cmd_d(char *args){
+
+  return 0;
+}
+
+static int cmd_c(char *args) {
+  cpu_exec(-1);
+  return 0;
+}
+
+
+
+static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
   return -1;
 }
 
-
-
-
-static int cmd_info(char *args) {
-  /* extract the first argument */
-  char *arg = strtok(NULL, " ");
-  if (arg == NULL) {
-    printf("Usage: info r (registers) or info w (watchpoints)\n");
-  } else {
-    if (strcmp(arg, "r") == 0) {
-      isa_reg_display();
-    }  }
-  
-  return 0;
-}
-
-
-
-static int cmd_x(char *args){
-char *arg1 = strtok(NULL, " ");
-  if (arg1 == NULL) {
-    printf("Usage: x N EXPR\n");
-    return 0;
-  }
-  char *arg2 = strtok(NULL, " ");
-  if (arg1 == NULL) {
-    printf("Usage: x N EXPR\n");
-    return 0;
-  }
-
-  int n = strtol(arg1, NULL, 10);
-  vaddr_t expr = strtol(arg2, NULL, 16);
-
-  int i, j;
-  for (i = 0; i < n;) {
-    printf(ANSI_FMT("%#018x: ", ANSI_FG_CYAN), expr);
-    
-    for (j = 0; i < n && j < 4; i++, j++) {
-      word_t w = vaddr_read(expr, 4);
-      expr += 4;
-      printf("%#018x ", w);
-    }
-    puts("");
-  }
-  
-
-return 0;
-}
-
-static int cmd_p(char* args) {
-  bool success;
-  word_t res = expr(args, &success);
-  if (!success) {
-    puts("invalid expression");
-  } else {
-    printf("%u\n%08x\n", res,res);
-    
-  }
-  return 0;
-}
-
-
 static int cmd_help(char *args);
-
-
 
 static struct {
   const char *name;
   const char *description;
   int (*handler) (char *);
 } cmd_table [] = {
-  { "help", "Display information about all supported commands", cmd_help },
+  { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-  { "si", "run program", cmd_si},
-  {"info","Registor detailed infomation",cmd_info}, 
-  /* TODO: Add more commands */
-  {"x","scan memory from expr by n bytes",cmd_x},
-  {"p", "Usage: p EXPR. Calculate the expression, e.g. p $eax + 1", cmd_p }
-
+  { "si", "si [N] 让程序单步执行N条指令后暂停执行,当N没有给出时, 缺省为1", cmd_si},
+  { "info", "info r 打印寄存器状态, info w 打印监视点信息", cmd_info},
+  { "x", "x N EXPR 求出表达式EXPR的值, 将结果作为起始内存地址, 以十六进制形式输出连续的N个4字节", cmd_x},
+  { "p", "p EXPR 求出表达式EXPR的值", cmd_p},
+  { "w", "w EXPR 当表达式EXPR的值发生变化时, 暂停程序执行", cmd_w},
+  { "d", "d N 删除序号为N的监视点", cmd_d},
+ 
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -225,7 +190,7 @@ void sdb_mainloop() {
 
     int i;
     for (i = 0; i < NR_CMD; i ++) {
-      if (strcmp(cmd, cmd_table[i].name) == 0) {//先判断指令表有无这个指令，有则向下      //看看返回值是否小于0，如果小于0则返回到main函数
+      if (strcmp(cmd, cmd_table[i].name) == 0) {
         if (cmd_table[i].handler(args) < 0) { return; }
         break;
       }
